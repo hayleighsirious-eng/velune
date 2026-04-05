@@ -8,8 +8,8 @@ const SUPABASE_URL  = 'https://cbsoztcgnzhetgalalil.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNic296dGNnbnpoZXRnYWxhbGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzODYzNTQsImV4cCI6MjA5MDk2MjM1NH0.PrdwDAJxSs-ygmIT6ew_TpxvAlHqged1V4mmje15CaI';
 
 // Cycle & alert settings (used across the app)
-const CYCLE_DAYS = 0.000694; // ≈ 1 minute (1/1440 of a day)
-const ALERT_DAYS = 0.000394;
+const CYCLE_DAYS = 30;
+const ALERT_DAYS = 5;
 
 // Shared Supabase client — window.supabase must be loaded from CDN before this file
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -104,7 +104,7 @@ function checkAccess(userId) {
 
   if (!trialData) {
     // First time ever — start their 30-day free trial now
-    const trialEnd = Date.now() + (60000); // 60000 milliseconds = 1 minute
+    const trialEnd = Date.now() + (30 * 86400000);
     localStorage.setItem(trialKey, JSON.stringify({ end: trialEnd, started: Date.now() }));
     const daysLeft = 30;
     return { allowed: true, daysLeft, reason: 'trial' };
