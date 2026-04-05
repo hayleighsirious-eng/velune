@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Velune — Tutorial Centre Payment Manager</title>
+  <link rel="stylesheet" href="./style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="icon" type="image/x-icon/jpeg" href="./assets/images/favicon-32x32.png">
+  <style>
+    /* ── Auth page layout ─────────────────────────────────────── */
+    .auth-split { display:flex; min-height:100vh; }
+
+    /* Left brand panel */
+    .auth-brand {
+      flex: 1;
+      background: linear-gradient(145deg, var(--navy) 0%, var(--navy-dark, #060f20) 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 40px; position: relative; overflow: hidden;
+    }
+    .auth-brand .brand-content { position: relative; z-index: 2; text-align: center; }
+    .brand-logo-wrap {
+      width: 90px; height: 90px; border-radius: 22px;
+      background: rgba(201,150,12,0.15); border: 2px solid rgba(201,150,12,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px; font-size: 2.4rem;
+    }
+    .brand-app-name {
+      font-family: 'Playfair Display', serif; font-size: 2.6rem; font-weight: 900;
+      color: var(--white); letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 12px;
+    }
+    .brand-tagline {
+      font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 40px;
+    }
+    .brand-features { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+    .brand-feature {
+      display: flex; align-items: center; gap: 12px;
+      color: rgba(255,255,255,0.75); font-size: 0.88rem;
+    }
+    .brand-feature-icon {
+      width: 32px; height: 32px; border-radius: 8px; background: rgba(201,150,12,0.2);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      color: var(--gold);
+    }
+    .brand-feature-icon svg { width: 16px; height: 16px; }
+    .brand-bg-circles {
+      position: absolute; inset: 0; z-index: 1;
+    }
+    .bc { position: absolute; border-radius: 50%; border: 1px solid rgba(201,150,12,0.08); }
+    .bc1 { width:400px; height:400px; top:-100px; left:-100px; }
+    .bc2 { width:300px; height:300px; bottom:-50px; right:-80px; }
+    .bc3 { width:200px; height:200px; top:50%; left:50%; transform:translate(-50%,-50%); }
+
+    /* Right form panel */
+    .auth-form-panel {
+      width: 480px; max-width: 100%; background: var(--white);
+      display: flex; flex-direction: column; justify-content: center; padding: 60px 48px;
+      position: relative;
+    }
+
+    /* Tab switcher */
+    .auth-tabs {
+      display: flex; background: var(--off-white, #f7f8fa);
+      border-radius: 12px; padding: 4px; margin-bottom: 32px; gap: 4px;
+    }
+    .auth-tab {
+      flex: 1; padding: 10px 8px; border: none; border-radius: 9px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+      background: transparent; color: var(--gray-400, #9ca3af); font-family: 'DM Sans', sans-serif;
+    }
+    .auth-tab.active {
+      background: var(--white); color: var(--navy);
+      box-shadow: 0 2px 8px rgba(15,31,61,0.12);
+    }
+
+    /* Panel visibility */
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+
+    /* Form elements */
+    .auth-title { font-family:'Playfair Display',serif; font-size:1.7rem; color:var(--navy); font-weight:700; margin-bottom:6px; }
+    .auth-sub { font-size:0.85rem; color:var(--gray-400); margin-bottom:28px; line-height:1.5; }
+
+    .auth-form-group { margin-bottom: 18px; }
+    .auth-form-group label { display:block; font-size:0.8rem; font-weight:600; color:var(--navy); margin-bottom:6px; letter-spacing:0.02em; text-transform:uppercase; }
+    .auth-form-group input, .auth-form-group select {
+      width: 100%; padding: 11px 14px; border: 1.5px solid var(--gray-200, #e5e7eb);
+      border-radius: 10px; font-size: 0.92rem; color: var(--navy); background: var(--off-white, #f7f8fa);
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s ease; outline: none; box-sizing: border-box;
+    }
+    .auth-form-group input:focus, .auth-form-group select:focus {
+      border-color: var(--gold); background: var(--white); box-shadow: 0 0 0 3px rgba(201,150,12,0.12);
+    }
+
+    /* Mode selector */
+    .mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+    .mode-card {
+      padding: 14px 12px; border: 2px solid var(--gray-200, #e5e7eb);
+      border-radius: 10px; cursor: pointer; transition: all 0.2s ease; text-align: center;
+      background: var(--off-white, #f7f8fa);
+    }
+    .mode-card:hover { border-color: var(--gold); }
+    .mode-card.selected { border-color: var(--gold); background: rgba(201,150,12,0.06); }
+    .mode-card-icon {
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 6px; color: var(--gold);
+    }
+    .mode-card-icon svg { width: 22px; height: 22px; }
+    .mode-card-title { font-size: 0.82rem; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .mode-card-desc { font-size: 0.72rem; color: var(--gray-400); line-height: 1.4; }
+
+    /* Buttons */
+    .btn-auth {
+      width: 100%; padding: 13px; background: linear-gradient(135deg, var(--navy) 0%, #1a3260 100%);
+      color: var(--white); border: none; border-radius: 10px; font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; font-family: 'DM Sans', sans-serif;
+      letter-spacing: 0.04em; margin-top: 4px;
+      box-shadow: 0 4px 16px rgba(15,31,61,0.25);
+    }
+    .btn-auth:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(15,31,61,0.32); }
+    .btn-auth:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+    .btn-auth-secondary {
+      width: 100%; padding: 11px; background: transparent;
+      color: var(--navy); border: 1.5px solid var(--gray-200, #e5e7eb); border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s ease; margin-top: 10px;
+    }
+    .btn-auth-secondary:hover { border-color: var(--navy); background: var(--off-white, #f7f8fa); }
+
+    /* Role toggle */
+    .role-toggle {
+      display: flex; background: var(--off-white, #f7f8fa);
+      border-radius: 10px; padding: 4px; margin-bottom: 24px; gap: 4px;
+    }
+    .role-btn {
+      flex: 1; padding: 9px; border: none; border-radius: 8px; font-size: 0.83rem;
+      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+      background: transparent; color: var(--gray-400); font-family: 'DM Sans', sans-serif;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .role-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .role-btn.active { background: var(--white); color: var(--navy); box-shadow: 0 2px 8px rgba(15,31,61,0.1); }
+
+    /* Student login section */
+    .student-login-divider {
+      display: flex; align-items: center; gap: 12px; margin: 20px 0;
+      color: var(--gray-400); font-size: 0.75rem;
+    }
+    .student-login-divider::before, .student-login-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--gray-200, #e5e7eb);
+    }
+    .student-info-note {
+      background: rgba(201,150,12,0.06); border: 1px solid rgba(201,150,12,0.2);
+      border-radius: 10px; padding: 12px 14px; font-size: 0.8rem;
+      color: var(--navy); line-height: 1.6; margin-bottom: 20px;
+    }
+    .student-info-note strong { color: var(--gold, #c9960c); }
+
+    /* Error / success messages */
+    .auth-error {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #dc2626;
+      margin-bottom: 14px; display: none;
+    }
+    .auth-success {
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #16a34a;
+      margin-bottom: 14px; display: none;
+    }
+
+    /* Forgot password link */
+    .forgot-link {
+      font-size: 0.8rem; color: var(--gold, #c9960c); cursor: pointer;
+      text-decoration: none; float: right; margin-top: -4px;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* Footer */
+    .auth-footer {
+      font-size: 0.75rem; color: var(--gray-400); text-align: center; margin-top: 28px;
+      line-height: 1.8; border-top: 1px solid var(--gray-200, #e5e7eb); padding-top: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .auth-brand { display: none; }
+      .auth-form-panel { width: 100%; padding: 40px 28px; }
+    }
+    @media (max-width: 480px) {
+      .auth-form-panel { padding: 32px 20px; }
+      .auth-title { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-split">
+
+  <!-- ── LEFT BRAND PANEL ─────────────────────────────────────── -->
+  <div class="auth-brand">
+    <div class="brand-content">
+      <div class="brand-logo-wrap">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#C9960C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </div>
+      <div class="brand-app-name">Velune</div>
+      <div class="brand-tagline">The complete payment management system<br>for tutorial centres. Simple. Powerful. Free.</div>
+      <div class="brand-features">
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <!-- Graduation cap -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
+          <span>Student portal — each student checks their own status</span>
+        </div>
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <!-- Credit card -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          </div>
+          <span>Full payment tracking with WhatsApp receipt confirmations</span>
+        </div>
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <!-- Star / VIP badge -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <span>VIP access management with monthly cycle countdowns</span>
+        </div>
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <!-- Bell -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <span>Automatic alerts for expiring student access cycles</span>
+        </div>
+
+        <div class="brand-feature">
+          <div class="brand-feature-icon">
+            <!-- Lock -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <span>Your data is completely private — nobody else can see it</span>
+        </div>
+
+      </div>
+    </div>
+    <div class="brand-bg-circles">
+      <span class="bc bc1"></span><span class="bc bc2"></span><span class="bc bc3"></span>
+    </div>
+  </div>
+
+  <!-- ── RIGHT FORM PANEL ─────────────────────────────────────── -->
+  <div class="auth-form-panel">
+
+    <!-- Tab switcher: Admin auth / Student login -->
+    <div class="role-toggle" style="margin-bottom:0">
+      <button class="role-btn active" id="tabAdminBtn" onclick="switchMainTab('admin')">
+        <!-- Shield icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Admin / Centre Owner
+      </button>
+      <button class="role-btn" id="tabStudentBtn" onclick="switchMainTab('student')">
+        <!-- Graduation cap icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+        Student Login
+      </button>
+    </div>
+
+    <!-- ════════════ ADMIN SECTION ════════════ -->
+    <div class="auth-panel active" id="panel-admin" style="margin-top:28px">
+
+      <!-- Sub-tabs: Sign In / Register -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
+        <button class="auth-tab"        id="tabRegister" onclick="switchAuthTab('register')">Create Account</button>
+        <button class="auth-tab"        id="tabForgot" onclick="switchAuthTab('forgot')" style="display:none">Reset Password</button>
+      </div>
+
+      <!-- ── SIGN IN ── -->
+      <div class="auth-panel active" id="panel-signin">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Sign in to access your centre's dashboard.</div>
+        <div class="auth-error" id="signinError"></div>
+        <div class="auth-form-group">
+          <label>Email Address</label>
+          <input type="email" id="signinEmail" placeholder="you@centre.com" autocomplete="email"/>
+        </div>
+        <div class="auth-form-group">
+          <label>
+            Password
+            <a class="forgot-link" onclick="switchAuthTab('forgot')">Forgot password?</a>
+          </label>
+          <input type="password" id="signinPassword" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button class="btn-auth" id="signinBtn" onclick="handleSignIn()">Sign In to Dashboard</button>
+        <button class="btn-auth-secondary" onclick="switchAuthTab('register')">Don't have an account? Create one free →</button>
+      </div>
+
+      <!-- ── REGISTER ── -->
+      <div class="auth-panel" id="panel-register">
+        <div class="auth-title">Create your account</div>
+        <div class="auth-sub">Free forever. No credit card. Your data stays private.</div>
+        <div class="auth-error" id="registerError"></div>
+        <div class="auth-success" id="registerSuccess"></div>
+        <div class="auth-form-group">
+          <label>Centre Name</label>
+          <input type="text" id="regCentreName" placeholder="e.g. Excel Tutors, 360 Academy"/>
+        </div>
+        <div class="auth-form-group">
+          <label>Email Address</label>
+          <input type="email" id="regEmail" placeholder="you@centre.com" autocomplete="email"/>
+        </div>
+        <div class="auth-form-group">
+          <label>Password (min. 6 characters)</label>
+          <input type="password" id="regPassword" placeholder="Create a strong password" autocomplete="new-password"/>
+        </div>
+        <div class="auth-form-group">
+          <label>Choose Your Payment Mode</label>
+          <div class="mode-cards">
+
+            <div class="mode-card selected" id="modeRecurring" onclick="selectMode('recurring')">
+              <div class="mode-card-icon">
+                <!-- Recurring / refresh arrows -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </div>
+              <div class="mode-card-title">Recurring</div>
+              <div class="mode-card-desc">Monthly cycles with countdown & VIP access timers</div>
+            </div>
+
+            <div class="mode-card" id="modeOneTime" onclick="selectMode('one_time')">
+              <div class="mode-card-icon">
+                <!-- Checkmark circle -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <div class="mode-card-title">One-Time</div>
+              <div class="mode-card-desc">Single payment — no timers or monthly cycles</div>
+            </div>
+
+          </div>
+          <input type="hidden" id="selectedMode" value="recurring"/>
+        </div>
+        <button class="btn-auth" id="registerBtn" onclick="handleRegister()">Create Free Account</button>
+        <button class="btn-auth-secondary" onclick="switchAuthTab('signin')">Already have an account? Sign in →</button>
+      </div>
+
+      <!-- ── FORGOT PASSWORD ── -->
+      <div class="auth-panel" id="panel-forgot">
+        <div class="auth-title">Reset your password</div>
+        <div class="auth-sub">Enter your email and we'll send you a reset link.</div>
+        <div class="auth-error" id="forgotError"></div>
+        <div class="auth-success" id="forgotSuccess"></div>
+        <div class="auth-form-group">
+          <label>Email Address</label>
+          <input type="email" id="forgotEmail" placeholder="you@centre.com"/>
+        </div>
+        <button class="btn-auth" id="forgotBtn" onclick="handleForgotPassword()">Send Reset Link</button>
+        <button class="btn-auth-secondary" onclick="switchAuthTab('signin')">← Back to Sign In</button>
+      </div>
+
+    </div>
+
+    <!-- ════════════ STUDENT SECTION ════════════ -->
+    <div class="auth-panel" id="panel-student" style="margin-top:28px">
+      <div class="auth-title" style="color:var(--navy)">Student Login</div>
+      <div class="auth-sub">View your fee status, payment record, and access countdown.</div>
+
+      <!-- Recurring mode: Login ID -->
+      <div id="studentRecurringPanel">
+        <div class="student-info-note">
+          Your <strong>Login ID</strong> (e.g. STU-AB12CD) was given to you when you registered. Contact your admin if you've forgotten it.
+        </div>
+        <div class="auth-error" id="studentRecurringError"></div>
+        <div class="auth-form-group">
+          <label>Your Login ID</label>
+          <input type="text" id="studentLoginId" placeholder="STU-XXXXXX" autocomplete="off" style="text-transform:uppercase; letter-spacing:0.1em; font-weight:700; font-size:1rem; text-align:center"/>
+        </div>
+        <button class="btn-auth" id="studentRecurringBtn" onclick="handleStudentLoginById()">View My Dashboard</button>
+      </div>
+
+      <!-- One-time mode: Name + PIN -->
+      <div id="studentOneTimePanel" style="display:none">
+        <div class="student-info-note">
+          Your <strong>Full Name</strong> and <strong>4-digit PIN</strong> were given to you when you registered. Contact your admin if you need help.
+        </div>
+        <div class="auth-error" id="studentOneTimeError"></div>
+        <div class="auth-form-group">
+          <label>Full Name</label>
+          <input type="text" id="studentName" placeholder="Enter your full name"/>
+        </div>
+        <div class="auth-form-group">
+          <label>4-Digit PIN</label>
+          <input type="password" id="studentPin" placeholder="••••" maxlength="4" style="text-align:center; letter-spacing:0.4em; font-size:1.2rem; font-weight:700"/>
+        </div>
+        <button class="btn-auth" id="studentOneTimeBtn" onclick="handleStudentLoginByPin()">View My Record</button>
+      </div>
+
+      <div style="text-align:center; margin-top:20px; font-size:0.78rem; color:var(--gray-400)">
+        Are you a centre admin? <a onclick="switchMainTab('admin')" style="color:var(--gold);cursor:pointer">Sign in here →</a>
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      Velune v1.0 &nbsp;·&nbsp; Secured by Supabase &nbsp;·&nbsp; Free forever<br>
+      <span id="liveStats">Loading stats...</span>
+    </div>
+  </div>
+</div>
+
+<script src="./supabase.js"></script>
+<script>
+// ── Tab switching ────────────────────────────────────────────
+let activeMainTab = 'admin';
+let selectedMode  = 'recurring';
+
+function switchMainTab(tab) {
+  activeMainTab = tab;
+  document.getElementById('panel-admin').classList.toggle('active', tab === 'admin');
+  document.getElementById('panel-student').classList.toggle('active', tab === 'student');
+  document.getElementById('tabAdminBtn').classList.toggle('active', tab === 'admin');
+  document.getElementById('tabStudentBtn').classList.toggle('active', tab === 'student');
+}
+
+function switchAuthTab(tab) {
+  ['signin','register','forgot'].forEach(t => {
+    const panel = document.getElementById('panel-' + t);
+    const tabEl = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (panel) panel.classList.toggle('active', t === tab);
+    if (tabEl) tabEl.classList.toggle('active', t === tab);
+  });
+  const forgotTab = document.getElementById('tabForgot');
+  if (forgotTab) forgotTab.style.display = tab === 'forgot' ? '' : 'none';
+}
+
+function selectMode(mode) {
+  selectedMode = mode;
+  document.getElementById('selectedMode').value = mode;
+  document.getElementById('modeRecurring').classList.toggle('selected', mode === 'recurring');
+  document.getElementById('modeOneTime').classList.toggle('selected', mode === 'one_time');
+}
+
+// ── Check existing session ───────────────────────────────────
+(async function() {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (session) { window.location.href = './admin.html'; return; }
+  loadLiveStats();
+})();
+
+async function loadLiveStats() {
+  try {
+    const { count } = await _supabase.from('profiles').select('*', { count: 'exact', head: true });
+    document.getElementById('liveStats').textContent = `${count || 0} tutorial centres using Velune`;
+  } catch(e) {
+    document.getElementById('liveStats').textContent = '';
+  }
+}
+
+// ── Sign In ──────────────────────────────────────────────────
+async function handleSignIn() {
+  const email    = document.getElementById('signinEmail').value.trim();
+  const password = document.getElementById('signinPassword').value;
+  const errEl    = document.getElementById('signinError');
+  const btn      = document.getElementById('signinBtn');
+
+  errEl.style.display = 'none';
+  if (!email || !password) {
+    errEl.textContent = 'Please enter your email and password.';
+    errEl.style.display = 'block'; return;
+  }
+
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+
+  const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = error.message === 'Invalid login credentials'
+      ? 'Incorrect email or password. Please try again.'
+      : error.message;
+    errEl.style.display = 'block';
+    btn.textContent = 'Sign In to Dashboard'; btn.disabled = false;
+  } else {
+    window.location.href = './admin.html';
+  }
+}
+
+// ── Register ─────────────────────────────────────────────────
+async function handleRegister() {
+  const centreName = document.getElementById('regCentreName').value.trim();
+  const email      = document.getElementById('regEmail').value.trim();
+  const password   = document.getElementById('regPassword').value;
+  const mode       = document.getElementById('selectedMode').value;
+  const errEl      = document.getElementById('registerError');
+  const successEl  = document.getElementById('registerSuccess');
+  const btn        = document.getElementById('registerBtn');
+
+  errEl.style.display = successEl.style.display = 'none';
+  if (!centreName) { errEl.textContent = 'Please enter your centre name.'; errEl.style.display='block'; return; }
+  if (!email)      { errEl.textContent = 'Please enter your email.'; errEl.style.display='block'; return; }
+  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display='block'; return; }
+
+  btn.textContent = 'Creating account...'; btn.disabled = true;
+
+  const { data, error } = await _supabase.auth.signUp({
+    email, password,
+    options: { data: { centre_name: centreName, mode } }
+  });
+
+  if (error) {
+    errEl.textContent = error.message; errEl.style.display = 'block';
+    btn.textContent = 'Create Free Account'; btn.disabled = false;
+    return;
+  }
+
+  // Create profile row immediately
+  if (data.user) {
+    await _supabase.from('profiles').upsert({
+      id: data.user.id, centre_name: centreName, mode
+    });
+  }
+
+  // If email confirmation is disabled, go straight in
+  if (data.session) {
+    window.location.href = './admin.html';
+  } else {
+    successEl.innerHTML = `&#10003; Account created! Check your email (<strong>${email}</strong>) for a confirmation link, then sign in.`;
+    successEl.style.display = 'block';
+    btn.textContent = 'Create Free Account'; btn.disabled = false;
+    setTimeout(() => switchAuthTab('signin'), 4000);
+  }
+}
+
+// ── Forgot Password ──────────────────────────────────────────
+async function handleForgotPassword() {
+  const email    = document.getElementById('forgotEmail').value.trim();
+  const errEl    = document.getElementById('forgotError');
+  const successEl= document.getElementById('forgotSuccess');
+  const btn      = document.getElementById('forgotBtn');
+
+  errEl.style.display = successEl.style.display = 'none';
+  if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display='block'; return; }
+
+  btn.textContent = 'Sending...'; btn.disabled = true;
+
+  const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/index.html'
+  });
+
+  if (error) {
+    errEl.textContent = error.message; errEl.style.display = 'block';
+  } else {
+    successEl.innerHTML = `&#10003; Reset link sent to <strong>${email}</strong>. Check your inbox (and spam folder).`;
+    successEl.style.display = 'block';
+  }
+  btn.textContent = 'Send Reset Link'; btn.disabled = false;
+}
+
+// ── Student Login — by Login ID (recurring mode) ─────────────
+async function handleStudentLoginById() {
+  const loginId = document.getElementById('studentLoginId').value.trim().toUpperCase();
+  const errEl   = document.getElementById('studentRecurringError');
+  const btn     = document.getElementById('studentRecurringBtn');
+
+  errEl.style.display = 'none';
+  if (!loginId) { errEl.textContent = 'Please enter your Login ID.'; errEl.style.display='block'; return; }
+
+  btn.textContent = 'Looking up...'; btn.disabled = true;
+
+  const { data: students, error } = await _supabase
+    .from('students').select('id, name, owner_id').eq('login_id', loginId).limit(1);
+
+  btn.textContent = 'View My Dashboard'; btn.disabled = false;
+
+  if (error || !students?.length) {
+    errEl.textContent = 'No student found with that Login ID. Contact your admin.';
+    errEl.style.display = 'block'; return;
+  }
+
+  localStorage.setItem('zt_role', 'student');
+  localStorage.setItem('zt_student_id', students[0].id);
+  localStorage.setItem('zt_owner_id', students[0].owner_id);
+  window.location.href = './student.html';
+}
+
+// ── Student Login — by Name + PIN (one_time mode) ────────────
+async function handleStudentLoginByPin() {
+  const name = document.getElementById('studentName').value.trim();
+  const pin  = document.getElementById('studentPin').value.trim();
+  const errEl= document.getElementById('studentOneTimeError');
+  const btn  = document.getElementById('studentOneTimeBtn');
+
+  errEl.style.display = 'none';
+  if (!name || !pin) { errEl.textContent = 'Please enter your name and PIN.'; errEl.style.display='block'; return; }
+  if (pin.length !== 4 || isNaN(pin)) { errEl.textContent = 'PIN must be exactly 4 digits.'; errEl.style.display='block'; return; }
+
+  btn.textContent = 'Looking up...'; btn.disabled = true;
+
+  const { data: students, error } = await _supabase
+    .from('students').select('id, name, owner_id').ilike('name', name).eq('student_pin', pin).limit(1);
+
+  btn.textContent = 'View My Record'; btn.disabled = false;
+
+  if (error || !students?.length) {
+    errEl.textContent = 'No record found. Check your name and PIN and try again.';
+    errEl.style.display = 'block'; return;
+  }
+
+  localStorage.setItem('zt_role', 'student');
+  localStorage.setItem('zt_student_id', students[0].id);
+  localStorage.setItem('zt_owner_id', students[0].owner_id);
+  window.location.href = './student.html';
+}
+
+// ── Detect which student login panel to show ─────────────────
+(function setupStudentToggle() {
+  const recurringPanel = document.getElementById('studentRecurringPanel');
+  const oneTimePanel   = document.getElementById('studentOneTimePanel');
+  const toggle = document.createElement('p');
+  toggle.style.cssText = 'text-align:center; font-size:0.8rem; color:var(--gray-400); margin-top:16px; cursor:pointer';
+  toggle.id = 'studentToggle';
+  toggle.innerHTML = `Using PIN to log in? <a style="color:var(--gold)">Switch to PIN login</a>`;
+  toggle.onclick = function() {
+    const usingId = recurringPanel.style.display !== 'none';
+    recurringPanel.style.display = usingId ? 'none' : '';
+    oneTimePanel.style.display   = usingId ? '' : 'none';
+    toggle.innerHTML = usingId
+      ? `Using a Login ID? <a style="color:var(--gold)">Switch to ID login</a>`
+      : `Using PIN to log in? <a style="color:var(--gold)">Switch to PIN login</a>`;
+  };
+  document.getElementById('panel-student').appendChild(toggle);
+})();
+
+// ── Enter key support ────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (activeMainTab === 'student') {
+    const usingId = document.getElementById('studentRecurringPanel').style.display !== 'none';
+    if (usingId) handleStudentLoginById(); else handleStudentLoginByPin();
+    return;
+  }
+  const active = document.querySelector('#panel-admin .auth-panel.active');
+  if (!active) return;
+  if (active.id === 'panel-signin')   handleSignIn();
+  if (active.id === 'panel-register') handleRegister();
+  if (active.id === 'panel-forgot')   handleForgotPassword();
+});
+
+// ── Password reset handler (redirect back) ───────────────────
+(async function checkPasswordReset() {
+  const hash = window.location.hash;
+  if (hash.includes('type=recovery')) {
+    switchAuthTab('forgot');
+    const panel = document.getElementById('panel-forgot');
+    panel.innerHTML = `
+      <div class="auth-title">Set new password</div>
+      <div class="auth-sub">Enter and confirm your new password below.</div>
+      <div class="auth-error" id="resetPwError"></div>
+      <div class="auth-success" id="resetPwSuccess"></div>
+      <div class="auth-form-group"><label>New Password</label><input type="password" id="newPw1" placeholder="New password (min 6 chars)"/></div>
+      <div class="auth-form-group"><label>Confirm Password</label><input type="password" id="newPw2" placeholder="Confirm password"/></div>
+      <button class="btn-auth" onclick="submitNewPassword()">Update Password</button>
+    `;
+  }
+})();
+
+async function submitNewPassword() {
+  const pw1   = document.getElementById('newPw1').value;
+  const pw2   = document.getElementById('newPw2').value;
+  const errEl = document.getElementById('resetPwError');
+  const sucEl = document.getElementById('resetPwSuccess');
+
+  errEl.style.display = sucEl.style.display = 'none';
+  if (pw1.length < 6) { errEl.textContent='Password must be at least 6 characters.'; errEl.style.display='block'; return; }
+  if (pw1 !== pw2)    { errEl.textContent='Passwords do not match.'; errEl.style.display='block'; return; }
+
+  const { error } = await _supabase.auth.updateUser({ password: pw1 });
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
+  else {
+    sucEl.textContent = '&#10003; Password updated! Redirecting to dashboard...';
+    sucEl.style.display = 'block';
+    setTimeout(() => window.location.href = './admin.html', 2000);
+  }
+}
+</script>
+
+</body>
+</html>

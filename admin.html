@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Velune — Admin Dashboard</title>
+  <link rel="stylesheet" href="./style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon/jpeg" href="./assets/images/favicon-32x32.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body class="admin-page">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C9960C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="sidebar-brand" id="sidebarCentreName">Velune</div>
+      <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin-top:1px">Admin Dashboard</div>
+    </div>
+    <button class="sidebar-close" onclick="toggleSidebar()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" onclick="showSection('dashboard',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a href="#" class="nav-item" onclick="showSection('students',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Students
+    </a>
+    <a href="#" class="nav-item" onclick="showSection('payments',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Payments
+    </a>
+    <a href="#" class="nav-item" id="navVIP" onclick="showSection('vip',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      VIP / Active
+    </a>
+    <a href="#" class="nav-item" id="navAlerts" onclick="showSection('alerts',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Alerts
+      <span class="nav-badge" id="alertBadge"></span>
+    </a>
+    <a href="#" class="nav-item danger-nav" onclick="showSection('settings',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Settings
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:0.85rem">AD</div>
+      <div>
+        <div class="admin-name" id="adminNameDisplay">Admin</div>
+        <div class="admin-role">Administrator</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<main class="main-content">
+  <header class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn-primary" onclick="openModal('addStudentModal')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Student
+      </button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <section id="section-dashboard" class="section active">
+    <div class="section-inner">
+      <h2 class="section-title">Overview</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="stat-card-body"><div class="stat-card-num" id="statTotal">0</div><div class="stat-card-label">Total Students</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="stat-card-body"><div class="stat-card-num" id="statPaid">0</div><div class="stat-card-label">Full Payment</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon orange"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div class="stat-card-body"><div class="stat-card-num" id="statOwing">0</div><div class="stat-card-label">Owing</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon gold"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div class="stat-card-body"><div class="stat-card-num" id="statVIP">0</div><div class="stat-card-label">VIP Active</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon teal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="stat-card-body"><div class="stat-card-num" id="statRevCollected">₦0</div><div class="stat-card-label">Revenue Collected</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon red"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+          <div class="stat-card-body"><div class="stat-card-num" id="statRevOwing">₦0</div><div class="stat-card-label">Revenue Owing</div></div>
+        </div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-header"><h3>Recent Payments</h3><span class="card-sub">Last 5 transactions</span></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Student</th><th>Amount</th><th>Date</th><th>Method</th><th>Status</th></tr></thead>
+            <tbody id="recentPaymentsBody"><tr><td colspan="5" class="empty-row">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card mt-4" id="dashAlertsCard">
+        <div class="card-header"><h3>Active Alerts</h3></div>
+        <div id="dashAlerts"><div class="empty-state">No alerts at this time.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STUDENTS -->
+  <section id="section-students" class="section">
+    <div class="section-inner">
+      <div class="section-header-row">
+        <h2 class="section-title">Students</h2>
+        <div class="search-bar-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="studentSearch" placeholder="Search students..." oninput="filterStudents()"/>
+        </div>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('paid',this)">Paid</button>
+        <button class="filter-btn" onclick="setFilter('partial',this)">Owing</button>
+        <button class="filter-btn" onclick="setFilter('vip',this)">VIP</button>
+        <button class="filter-btn" onclick="setFilter('expired',this)">Expired</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Class</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th><th>VIP</th><th>Expires</th><th>Actions</th></tr></thead>
+          <tbody id="studentsTableBody"><tr><td colspan="9" class="empty-row">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAYMENTS -->
+  <section id="section-payments" class="section">
+    <div class="section-inner">
+      <h2 class="section-title">Payment History</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Student</th><th>Amount</th><th>Method</th><th>Date</th><th>Serial</th></tr></thead>
+          <tbody id="paymentsTableBody"><tr><td colspan="5" class="empty-row">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIP -->
+  <section id="section-vip" class="section">
+    <div class="section-inner">
+      <h2 class="section-title">VIP / Active Students</h2>
+      <div class="vip-grid" id="vipGrid"><div class="empty-state">Loading...</div></div>
+    </div>
+  </section>
+
+  <!-- ALERTS -->
+  <section id="section-alerts" class="section">
+    <div class="section-inner">
+      <h2 class="section-title">Alerts &amp; Notifications</h2>
+      <div id="alertsList"><div class="empty-state">No alerts at this time.</div></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="section-settings" class="section">
+    <div class="section-inner">
+      <h2 class="section-title">Settings</h2>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3>Centre Settings</h3>
+          <div style="margin-bottom:14px;padding:10px 14px;background:rgba(201,150,12,0.06);border:1px solid rgba(201,150,12,0.2);border-radius:8px;font-size:0.82rem">
+            <strong>Mode:</strong> <span id="modeDisplay">—</span>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:3px">Mode is set at registration and cannot be changed.</div>
+          </div>
+          <div class="form-group"><label>Centre Name</label><input type="text" id="centreName"/></div>
+          <div class="form-group"><label>Default Monthly Fee (₦)</label><input type="number" id="defaultFee"/></div>
+          <div class="form-group"><label>WhatsApp Number (with country code, no +)</label><input type="text" id="whatsappNum" placeholder="e.g. 2349035930050"/></div>
+          <h3 style="margin-top:20px">Bank Account Details</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px">These are shown to students when they owe a balance.</p>
+          <div class="form-group"><label>Bank Name</label><input type="text" id="bankName" placeholder="e.g. Access Bank"/></div>
+          <div class="form-group"><label>Account Number</label><input type="text" id="accountNumber" placeholder="e.g. 0701705516"/></div>
+          <div class="form-group"><label>Account Name</label><input type="text" id="accountName" placeholder="e.g. JOHN DOE TUTORIAL"/></div>
+          <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+        <div class="settings-card">
+          <h3>Change Password</h3>
+          <div class="form-group"><label>New Password</label><input type="password" id="newPasswordInput" placeholder="New password (min 6 chars)"/></div>
+          <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPasswordInput" placeholder="Confirm password"/></div>
+          <button class="btn-primary" onclick="changePassword()">Update Password</button>
+        </div>
+        <div class="settings-card danger-card">
+          <h3>System Reset</h3>
+          <p>Permanently delete ALL your student records, payments, and VIP data. Your account is preserved. This cannot be undone.</p>
+          <button class="btn-danger" onclick="confirmReset()">Reset All Data</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Add Student -->
+<div class="modal-overlay" id="addStudentModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Add New Student</h3><button onclick="closeModal('addStudentModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="newName" placeholder="Student full name"/></div>
+        <div class="form-group"><label>Class / Group</label><input type="text" id="newClass" placeholder="e.g. Morning or Afternoon"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Total Fee (₦) *</label><input type="number" id="newTotalFee" placeholder="e.g. 5000"/></div>
+        <div class="form-group"><label>Initial Payment (₦)</label><input type="number" id="newAmountPaid" placeholder="e.g. 2500"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email (optional)</label><input type="email" id="newEmail" placeholder="student@email.com"/></div>
+        <div class="form-group"><label>Payment Method</label>
+          <select id="newPayMethod"><option>Cash</option><option>Bank Transfer</option><option>POS</option><option>Online</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="newNotes" rows="2" placeholder="Optional notes..."></textarea></div>
+      <div id="addStudentError" class="form-error" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('addStudentModal')">Cancel</button>
+      <button class="btn-primary" onclick="addStudent()">Add Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record Payment -->
+<div class="modal-overlay" id="recordPaymentModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Record Payment</h3><button onclick="closeModal('recordPaymentModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="student-pay-info" id="payStudentInfo"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Amount (₦) *</label><input type="number" id="payAmount" placeholder="Amount to record"/></div>
+        <div class="form-group"><label>Payment Method</label>
+          <select id="payMethod"><option>Cash</option><option>Bank Transfer</option><option>POS</option><option>Online</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Payment Date</label><input type="date" id="payDate"/></div>
+      <input type="hidden" id="payStudentId"/>
+      <div id="recordPayError" class="form-error" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('recordPaymentModal')">Cancel</button>
+      <button class="btn-primary" onclick="recordPayment()">Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Student -->
+<div class="modal-overlay" id="viewStudentModal">
+  <div class="modal modal-lg">
+    <div class="modal-header"><h3>Student Profile</h3><button onclick="closeModal('viewStudentModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body" id="viewStudentBody"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('viewStudentModal')">Close</button>
+      <button class="btn-primary"  id="viewPayBtn">Record Payment</button>
+      <button class="btn-warning"  id="viewPauseBtn">Pause Cycle</button>
+      <button class="btn-gold"     id="viewVIPBtn">Grant Temp VIP</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pause Cycle -->
+<div class="modal-overlay" id="pauseModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Pause Student Cycle</h3><button onclick="closeModal('pauseModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <p style="margin-bottom:14px;font-size:0.88rem">Pausing stops the countdown timer. Please provide a reason.</p>
+      <div class="form-group"><label>Reason *</label><textarea id="pauseReason" rows="3" placeholder="Enter reason for pausing..."></textarea></div>
+      <input type="hidden" id="pauseStudentId"/>
+      <div id="pauseError" class="form-error" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('pauseModal')">Cancel</button>
+      <button class="btn-warning" onclick="executePause()">Pause Cycle</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Student -->
+<div class="modal-overlay" id="editStudentModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Edit Student</h3><button onclick="closeModal('editStudentModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editStudentId"/>
+      <div class="form-row">
+        <div class="form-group"><label>Full Name</label><input type="text" id="editName"/></div>
+        <div class="form-group"><label>Class</label><input type="text" id="editClass"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Total Fee (₦)</label><input type="number" id="editTotalFee"/></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="editNotes"/></div>
+      </div>
+      <div id="editStudentError" class="form-error" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('editStudentModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveEditStudent()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Modal -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <div class="modal-header danger-header"><h3>Confirm Data Reset</h3><button onclick="closeModal('resetModal')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="danger-warning">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p>This will permanently delete <strong>all your students, payments, and VIP data</strong>. Your account login is preserved.</p>
+      </div>
+      <div class="form-group"><label>Type <strong>RESET</strong> to confirm</label><input type="text" id="resetConfirmInput" placeholder="Type RESET here"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('resetModal')">Cancel</button>
+      <button class="btn-danger" onclick="executeReset()">Permanently Reset</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="./supabase.js"></script>
+<script src="./admin.js"></script>
+</body>
+</html>

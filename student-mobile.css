@@ -1,0 +1,227 @@
+/* ============================================================
+   STUDENT PORTAL — MOBILE RESPONSIVE PATCH
+   Add this AFTER your existing style.css link on student.html only
+   ============================================================ */
+
+/* ── Base mobile reset for student page ──────────────────── */
+@media (max-width: 768px) {
+
+  /* Header */
+  .student-header-inner {
+    padding: 0 14px;
+    height: 52px;
+  }
+  .student-brand {
+    font-size: 0.95rem;
+    gap: 8px;
+  }
+  .student-brand img {
+    width: 26px;
+    height: 26px;
+  }
+  .logout-btn-s {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    gap: 5px;
+  }
+
+  /* Main content area */
+  .student-main {
+    padding: 14px 12px 32px;
+  }
+  .student-content {
+    max-width: 100%;
+  }
+
+  /* ── Profile header card ──────────────────────────────── */
+  .s-profile-header {
+    padding: 20px 16px 18px;
+    margin-bottom: 14px;
+    border-radius: 14px;
+  }
+  .s-ph-top {
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+  .s-ph-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .s-ph-name {
+    font-size: 1.15rem;
+    line-height: 1.25;
+  }
+  .s-ph-class {
+    font-size: 0.78rem;
+    margin-top: 2px;
+  }
+  .s-ph-serial {
+    margin-top: 3px;
+  }
+  .s-vip-badge {
+    padding: 3px 10px;
+    font-size: 0.72rem;
+  }
+  .s-ph-badges {
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  /* Stats row — 3 col on mobile but compact */
+  .s-stats-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .s-stat {
+    padding: 10px 10px;
+  }
+  .s-stat-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2px;
+    margin-bottom: 3px;
+  }
+  .s-stat-val {
+    font-size: 0.92rem;
+    word-break: break-all;
+  }
+
+  /* ── Timer card ───────────────────────────────────────── */
+  .s-timer-card {
+    padding: 16px 16px;
+    margin-bottom: 14px;
+    border-radius: 12px;
+  }
+  .s-timer-title {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+  .timer-days {
+    font-size: 1.3rem;
+    margin: 10px 0 3px;
+  }
+  .timer-days-label {
+    font-size: 0.74rem;
+  }
+  .timer-info {
+    font-size: 0.74rem;
+  }
+
+  /* ── Payment section (owing) ──────────────────────────── */
+  .s-pay-section {
+    padding: 16px 14px;
+    margin-bottom: 14px;
+    border-radius: 12px;
+  }
+  .s-pay-title {
+    font-size: 0.85rem;
+  }
+  .s-pay-desc {
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+  }
+  .account-details {
+    padding: 12px 12px;
+    border-radius: 10px;
+  }
+  .acc-row {
+    padding: 5px 0;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  .acc-label {
+    font-size: 0.74rem;
+  }
+  .acc-value {
+    font-size: 0.8rem;
+    text-align: right;
+    word-break: break-all;
+  }
+  .amount-owed-big {
+    font-size: 1.25rem;
+    margin: 10px 0;
+  }
+  .btn-whatsapp {
+    padding: 12px;
+    font-size: 0.88rem;
+    border-radius: 10px;
+  }
+
+  /* ── Payment history card ─────────────────────────────── */
+  .s-history-card {
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+  .s-history-card .card-header {
+    padding: 12px 14px 10px;
+  }
+  .s-history-card .card-header h3 {
+    font-size: 0.88rem;
+  }
+  .s-history-card .data-table {
+    font-size: 0.78rem;
+  }
+  .s-history-card .data-table thead th {
+    padding: 8px 10px;
+    font-size: 0.68rem;
+  }
+  .s-history-card .data-table tbody td {
+    padding: 9px 10px;
+  }
+
+  /* ── Pause banner ─────────────────────────────────────── */
+  .pause-banner {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+  .pause-banner-text strong {
+    font-size: 0.82rem;
+  }
+  .pause-banner-text span {
+    font-size: 0.75rem;
+  }
+
+  /* ── Register new month button ────────────────────────── */
+  #regNewMonthBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 18px;
+    font-size: 0.88rem;
+    margin-bottom: 14px;
+  }
+
+  /* ── Toast ────────────────────────────────────────────── */
+  .toast {
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+    font-size: 0.83rem;
+    padding: 12px 16px;
+  }
+}
+
+/* ── Very small screens (≤380px) ─────────────────────────── */
+@media (max-width: 380px) {
+  .s-stats-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .s-stats-row .s-stat:last-child {
+    grid-column: 1 / -1;
+  }
+  .s-ph-name {
+    font-size: 1rem;
+  }
+  .s-stat-val {
+    font-size: 0.85rem;
+  }
+  .student-main {
+    padding: 12px 10px 28px;
+  }
+}

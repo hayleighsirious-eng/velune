@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Velune — Activate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="./supabase.js"></script>
+  <link rel="icon" type="image/x-icon/jpeg" href="./assets/images/favicon-32x32.png">
+  <style>
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #F7F8FC;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .wrap { max-width: 460px; width: 100%; }
+
+    /* Brand */
+    .brand {
+      text-align: center;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #0F1F3D;
+    }
+    .brand-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #C9960C, #E8B422);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Main card */
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(15,31,61,0.10);
+      overflow: hidden;
+    }
+
+    .card-top {
+      background: linear-gradient(135deg, #0F1F3D 0%, #1A3260 100%);
+      padding: 32px 28px 28px;
+      text-align: center;
+    }
+    .lock-icon {
+      width: 56px; height: 56px;
+      background: rgba(201,150,12,0.15);
+      border: 2px solid rgba(201,150,12,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .lock-icon svg { width: 24px; height: 24px; stroke: #C9960C; }
+    .card-top h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .card-top p {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+    }
+
+    .card-body { padding: 28px; }
+
+    /* Steps */
+    .steps { margin-bottom: 24px; }
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid #EEF0F6;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      width: 28px; height: 28px;
+      background: #0F1F3D;
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-text { font-size: 0.88rem; color: #2C3550; line-height: 1.5; }
+    .step-text strong { color: #0F1F3D; }
+    .step-text .price-tag {
+      display: inline-block;
+      background: rgba(201,150,12,0.1);
+      color: #B7770D;
+      border: 1px solid rgba(201,150,12,0.25);
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    /* WhatsApp button */
+    .btn-whatsapp {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #25D366, #20bc5a);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 14px rgba(37,211,102,0.3);
+      transition: all 0.2s;
+    }
+    .btn-whatsapp:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,211,102,0.4); }
+
+    /* Code input section */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      color: #8E9AB5; font-size: 0.78rem; margin-bottom: 20px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: #EEF0F6;
+    }
+
+    .input-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #0F1F3D;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .code-input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid #D8DCE9;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #0F1F3D;
+      background: #F7F8FC;
+      outline: none;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .code-input:focus {
+      border-color: #C9960C;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(201,150,12,0.12);
+    }
+    .code-input::placeholder {
+      color: #8E9AB5;
+      letter-spacing: 0.06em;
+      font-weight: 400;
+    }
+
+    .btn-activate {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #0F1F3D, #1A3260);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      margin-top: 12px;
+      box-shadow: 0 4px 16px rgba(15,31,61,0.25);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-activate:hover { transform: translateY(-1px); }
+    .btn-activate:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+    /* Messages */
+    .msg-error {
+      background: rgba(192,57,43,0.08);
+      border: 1px solid rgba(192,57,43,0.2);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 0.83rem;
+      color: #C0392B;
+      margin-top: 12px;
+      display: none;
+    }
+    .msg-success {
+      background: rgba(12,122,74,0.08);
+      border: 1px solid rgba(12,122,74,0.2);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 0.83rem;
+      color: #0C7A4A;
+      margin-top: 12px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.78rem;
+      color: #8E9AB5;
+    }
+    .footer-links a {
+      color: #C9960C;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .footer-links a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="brand">
+    <div class="brand-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F1F3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    </div>
+    Velune
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <div class="lock-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <h2>Your free trial has ended</h2>
+      <p>Get an activation code to continue using Velune and keep all your student data.</p>
+    </div>
+
+    <div class="card-body">
+
+      <!-- 3 steps -->
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            Send <span class="price-tag">₦3,000</span> to the account below or contact us on WhatsApp
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            Send your <strong>payment screenshot</strong> on WhatsApp — you'll receive your activation code within minutes
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            Enter your code below to unlock your dashboard for another <strong>30 days</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- WhatsApp contact button -->
+      <a class="btn-whatsapp" id="waBtn" href="#" target="_blank" rel="noopener noreferrer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        Contact Us on WhatsApp
+      </a>
+
+      <div class="divider">Already have a code? Enter it below</div>
+
+      <label class="input-label">Activation Code</label>
+      <input
+        type="text"
+        class="code-input"
+        id="codeInput"
+        placeholder="VLN-XXXXXXXX-YYYYMMDD"
+        maxlength="22"
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+      <button class="btn-activate" id="activateBtn" onclick="handleActivate()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Activate My Dashboard
+      </button>
+
+      <div class="msg-error"   id="msgError"></div>
+      <div class="msg-success" id="msgSuccess">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="msgSuccessText"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-links">
+    <a onclick="handleLogout()">Sign out</a>
+    &nbsp;·&nbsp;
+    <a onclick="window.location.href='./admin.html'">Try dashboard anyway</a>
+  </div>
+
+</div>
+
+<script>
+  // ── Boot ────────────────────────────────────────────────────
+  let currentUserId = null;
+
+  // YOUR WhatsApp number — change this to your number (no + sign)
+  const YOUR_WHATSAPP = '2348158167305';
+
+  (async function init() {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) { window.location.href = './index.html'; return; }
+    currentUserId = session.user.id;
+
+    // Set WhatsApp link
+    const msg = encodeURIComponent(
+      'Hi! I want to renew my Velune subscription (₦3,000/month).\n\nMy account email: ' + session.user.email
+    );
+    document.getElementById('waBtn').href = `https://wa.me/${YOUR_WHATSAPP}?text=${msg}`;
+  })();
+
+  // ── Auto-format code input ──────────────────────────────────
+  document.getElementById('codeInput').addEventListener('input', function() {
+    let val = this.value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+    // Auto-insert dashes: VLN-XXXXXXXX-YYYYMMDD
+    if (val.length > 3)  val = val.substring(0,3)  + '-' + val.substring(3);
+    if (val.length > 12) val = val.substring(0,12) + '-' + val.substring(12);
+    this.value = val.substring(0, 22);
+  });
+
+  // ── Activate ────────────────────────────────────────────────
+  async function handleActivate() {
+    const code  = document.getElementById('codeInput').value.trim();
+    const errEl = document.getElementById('msgError');
+    const sucEl = document.getElementById('msgSuccess');
+    const btn   = document.getElementById('activateBtn');
+
+    errEl.style.display = 'none';
+    sucEl.style.display = 'none';
+
+    if (!code) {
+      errEl.textContent    = 'Please enter your activation code.';
+      errEl.style.display  = 'block';
+      return;
+    }
+
+    if (!currentUserId) {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) { window.location.href = './index.html'; return; }
+      currentUserId = session.user.id;
+    }
+
+    btn.textContent = 'Checking code...';
+    btn.disabled    = true;
+
+    const result = await activateLicense(currentUserId, code);
+
+    if (!result.success) {
+      errEl.textContent   = result.message;
+      errEl.style.display = 'block';
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Activate My Dashboard`;
+      btn.disabled  = false;
+      return;
+    }
+
+    document.getElementById('msgSuccessText').textContent = result.message + ' Redirecting...';
+    sucEl.style.display = 'flex';
+    btn.textContent     = 'Activated! ✓';
+
+    setTimeout(() => { window.location.href = './admin.html'; }, 2000);
+  }
+
+  // Enter key support
+  document.getElementById('codeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleActivate();
+  });
+
+  function handleLogout() {
+    _supabase.auth.signOut().then(() => {
+      localStorage.clear();
+      window.location.href = './index.html';
+    });
+  }
+</script>
+
+</body>
+</html>
