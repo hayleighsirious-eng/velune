@@ -191,12 +191,16 @@ function renderStudentsTable() {
 
   tbody.innerHTML = list.map(s => {
     const cycle  = isRecurring ? calcCycle(s) : null;
-    let expText  = '—';
-    if (isRecurring && s.cycle_start) {
-      expText = (cycle.expired && !s.vip_active)
-        ? '<span class="badge badge-red">Cycle Ended</span>'
-        : fmtDate(cycle.due);
-    }
+   let expText = '—';
+if (isRecurring && s.cycle_start) {
+  if (cycle.expired && !s.vip_active && s.balance > 0) {
+    expText = '<span class="badge badge-red">Cycle Ended</span>';
+  } else if (s.vip_active || !cycle.expired) {
+    expText = `Month ${s.month_number || 1} — ${cycle.daysLeft}d left (${fmtDate(cycle.due)})`;
+  } else {
+    expText = `Month ${s.month_number || 1} — starts ${fmtDate(s.cycle_start)}`;
+  }
+}
 
     const loginInfo = ownerProfile.mode === 'recurring'
       ? `<small style="color:var(--text-muted)">${s.login_id || '—'}</small>`
@@ -222,9 +226,13 @@ function renderStudentsTable() {
 }
 
 function getStatusBadge(s) {
-  const cycle = ownerProfile.mode === 'recurring' ? calcCycle(s) : null;
   if (s.paused) return '<span class="badge badge-orange">Paused</span>';
-  if (cycle && cycle.expired && !s.vip_active && s.cycle_start) return '<span class="badge badge-red">Cycle Ended</span>';
+  if (ownerProfile.mode === 'recurring' && s.cycle_start) {
+    const cycle = calcCycle(s);
+    // Only show "Cycle Ended" if balance still owing (can't start new month yet)
+    if (cycle.expired && !s.vip_active && s.balance > 0)
+      return '<span class="badge badge-red">Cycle Ended</span>';
+  }
   if (s.balance <= 0) return '<span class="badge badge-green">Paid</span>';
   return '<span class="badge badge-orange">Owing</span>';
 }
