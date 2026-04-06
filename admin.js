@@ -1149,13 +1149,24 @@ function initCookieBanner() {
 document.addEventListener('DOMContentLoaded', initCookieBanner);
 
 function showAdminWelcome(adminName, stats) {
-  const key = 'velune_welcomed_admin';
-  if (sessionStorage.getItem(key)) return;
-  sessionStorage.setItem(key, '1');
-  const hour      = new Date().getHours();
-  const greeting  = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const sessionKey = 'velune_welcomed_admin';
+  const onboardKey = 'velune_onboarding_done_' + currentUserId;
+
+  // Show onboarding if no students yet AND not previously dismissed
+  const isFirstTime = stats.total === 0 && !localStorage.getItem(onboardKey);
+
+  if (isFirstTime) {
+    showOnboarding(adminName);
+    return;
+  }
+
+  // Regular returning-user welcome (existing logic)
+  if (sessionStorage.getItem(sessionKey)) return;
+  sessionStorage.setItem(sessionKey, '1');
+  const hour     = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const firstName = (adminName || 'Admin').split(' ')[0];
-  const overlay   = document.createElement('div');
+  const overlay = document.createElement('div');
   overlay.className = 'welcome-modal-overlay';
   overlay.id = 'welcomeOverlay';
   overlay.innerHTML = `
@@ -1172,6 +1183,95 @@ function showAdminWelcome(adminName, stats) {
     </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+
+
+
+function showOnboarding(adminName) {
+  const firstName = (adminName || 'Admin').split(' ')[0];
+  const overlay = document.createElement('div');
+  overlay.className = 'welcome-modal-overlay';
+  overlay.id = 'onboardingOverlay';
+  overlay.innerHTML = `
+    <div class="onboarding-modal">
+      <div class="onboarding-header">
+        <div class="onboarding-logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C9960C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Velune
+        </div>
+        <button class="onboarding-skip" onclick="dismissOnboarding()">Skip for now</button>
+      </div>
+
+      <div class="onboarding-welcome">
+        <div class="onboarding-emoji">🎉</div>
+        <h2>Welcome, ${firstName}!</h2>
+        <p>Your dashboard is ready. Here's how to get started in 3 simple steps.</p>
+      </div>
+
+      <div class="onboarding-steps">
+
+        <div class="onboarding-step" id="ob-step-1">
+          <div class="ob-step-num">1</div>
+          <div class="ob-step-body">
+            <div class="ob-step-title">Set up your centre</div>
+            <div class="ob-step-desc">Add your centre name, default fee, and bank details so everything is personalised.</div>
+            <button class="ob-step-btn" onclick="dismissOnboarding(); showSection('settings', document.querySelector('.nav-item.danger-nav'))">
+              Go to Settings →
+            </button>
+          </div>
+          <div class="ob-step-check" id="ob-check-1">✓</div>
+        </div>
+
+        <div class="onboarding-step" id="ob-step-2">
+          <div class="ob-step-num">2</div>
+          <div class="ob-step-body">
+            <div class="ob-step-title">Add your first student</div>
+            <div class="ob-step-desc">Register a student with their name, class, and fee. Their login ID or PIN is generated automatically.</div>
+            <button class="ob-step-btn" onclick="dismissOnboarding(); openModal('addStudentModal')">
+              Add First Student →
+            </button>
+          </div>
+          <div class="ob-step-check" id="ob-check-2">✓</div>
+        </div>
+
+        <div class="onboarding-step" id="ob-step-3">
+          <div class="ob-step-num">3</div>
+          <div class="ob-step-body">
+            <div class="ob-step-title">Record their first payment</div>
+            <div class="ob-step-desc">Once a student is added, use the <strong>Pay</strong> button in the Students table to log their payment and activate VIP.</div>
+          </div>
+          <div class="ob-step-check" id="ob-check-3">✓</div>
+        </div>
+
+      </div>
+
+      <div class="onboarding-footer">
+        <button class="onboarding-done-btn" onclick="dismissOnboarding()">Got it — Let's go →</button>
+        <div class="onboarding-hint">You can always find help in Settings.</div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) dismissOnboarding(); });
+
+  // Mark steps complete based on profile data
+  if (ownerProfile?.centre_name && ownerProfile.centre_name !== 'My Centre') {
+    document.getElementById('ob-step-1')?.classList.add('ob-done');
+  }
+}
+
+function dismissOnboarding() {
+  localStorage.setItem('velune_onboarding_done_' + currentUserId, '1');
+  const el = document.getElementById('onboardingOverlay');
+  if (el) {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.25s ease';
+    setTimeout(() => el.remove(), 260);
+  }
 }
 
 function showAccessBanner(html, bgColor) {
