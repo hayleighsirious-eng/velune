@@ -903,3 +903,29 @@
   .onboarding-modal { border-radius: 12px; }
   .onboarding-welcome h2 { font-size: 1.25rem; }
 }
+
+.ob-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ob-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+
+.ob-dot-active {
+  background: var(--gold);
+  width: 22px;
+  border-radius: 4px;
+}
+
+.ob-dot-done {
+  background: var(--success);
+}
