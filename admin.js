@@ -498,7 +498,7 @@ async function addStudent() {
   if (error) { showErr(errEl, 'Error adding student: ' + error.message); return; }
 
   if (amtPaid > 0) {
-    await _supabase.from('payments').insert([{
+    const { error: payErr } = await _supabase.from('payments').insert([{
       owner_id:       currentUserId,
       student_id:     newStudent.id,
       amount:         amtPaid,
@@ -508,6 +508,7 @@ async function addStudent() {
       month_number:   1,
       voided:         false
     }]);
+    if (payErr) showToast('Student added but payment failed to record: ' + payErr.message, 'error');
   }
 
   closeModal('addStudentModal');
