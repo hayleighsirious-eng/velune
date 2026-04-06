@@ -326,7 +326,7 @@ function renderVIPCards(list) {
           <button class="btn-xs btn-green" onclick="openRecordPayment('${s.id}')">Record Pay</button>
           ${s.temp_vip
             ? `<button class="btn-xs btn-red" onclick="removeTempVIP('${s.id}')">Remove Temp VIP</button>`
-            : `<button class="btn-xs btn-grey" onclick="grantTempVIP('${s.id}')">Grant Temp VIP</button>`
+            : ``
           }
         </div>
       </div>`;
@@ -821,6 +821,9 @@ function viewStudent(studentId) {
 
   const vipBtn = document.getElementById('viewVIPBtn');
   if (isRecurring && cycleExpired) {
+    vipBtn.style.display = 'none';
+  } else if (s.vip_active && !s.temp_vip) {
+    // Fully paid permanent VIP — hide button entirely
     vipBtn.style.display = 'none';
   } else {
     vipBtn.style.display = '';
