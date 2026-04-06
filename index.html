@@ -3,444 +3,1844 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Velune — Tutorial Centre Payment Manager</title>
-  <link rel="stylesheet" href="./style.css"/>
+  <title>Velune — Payment Management for Tutorial Centres</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="./assets/images/favicon-32x32.png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<link rel="icon" type="image/x-icon/jpeg" href="./assets/images/favicon-32x32.png">
   <style>
-    /* ── Auth page layout ─────────────────────────────────────── */
-    .auth-split { display:flex; min-height:100vh; }
+    :root {
+      --navy:        #0B1E3D;
+      --navy-mid:    #132847;
+      --navy-light:  #1E3A60;
+      --gold:        #C49A0C;
+      --gold-light:  #E8B91A;
+      --gold-pale:   rgba(196,154,12,0.08);
+      --gold-border: rgba(196,154,12,0.25);
+      --white:       #FFFFFF;
+      --off-white:   #F8F7F4;
+      --cream:       #F2EFE8;
+      --text-body:   #3A3A3A;
+      --text-muted:  #7A7A7A;
+      --border:      rgba(11,30,61,0.1);
+      --radius-sm:   8px;
+      --radius-md:   14px;
+      --radius-lg:   22px;
+      --radius-xl:   32px;
+    }
 
-    /* Left brand panel */
-    .auth-brand {
-      flex: 1;
-      background: linear-gradient(145deg, var(--navy) 0%, var(--navy-dark, #060f20) 100%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 60px 40px; position: relative; overflow: hidden;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--off-white);
+      color: var(--text-body);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
-    .auth-brand .brand-content { position: relative; z-index: 2; text-align: center; }
-    .brand-logo-wrap {
-      width: 90px; height: 90px; border-radius: 22px;
-      background: rgba(201,150,12,0.15); border: 2px solid rgba(201,150,12,0.3);
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 68px;
+      background: rgba(248,247,244,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    nav.scrolled {
+      background: rgba(248,247,244,0.97);
+      box-shadow: 0 4px 32px rgba(11,30,61,0.06);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-logo-mark {
+      width: 36px; height: 36px;
+      border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 24px; font-size: 2.4rem;
+      flex-shrink: 0;
     }
-    .brand-app-name {
-      font-family: 'Playfair Display', serif; font-size: 2.6rem; font-weight: 900;
-      color: var(--white); letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 12px;
+
+    .nav-logo-mark img {
+      width: 22px; height: 22px;
+      object-fit: contain;
+      
     }
-    .brand-tagline {
-      font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 40px;
+
+    .nav-logo-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.02em;
     }
-    .brand-features { display: flex; flex-direction: column; gap: 14px; text-align: left; }
-    .brand-feature {
-      display: flex; align-items: center; gap: 12px;
-      color: rgba(255,255,255,0.75); font-size: 0.88rem;
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
     }
-    .brand-feature-icon {
-      width: 32px; height: 32px; border-radius: 8px; background: rgba(201,150,12,0.2);
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+
+    .nav-links a {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--navy); }
+
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-nav-ghost {
+      padding: 9px 20px;
+      border: 1.5px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--navy);
+      cursor: pointer;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-nav-ghost:hover {
+      border-color: var(--navy);
+      background: rgba(11,30,61,0.04);
+    }
+
+    .btn-nav-primary {
+      padding: 9px 22px;
+      border: none;
+      border-radius: 100px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--white);
+      cursor: pointer;
+      background: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-nav-primary:hover {
+      background: var(--navy-light);
+      transform: translateY(-1px);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding-top: 68px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 60px 80px 80px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 6px 8px;
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-border);
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      width: fit-content;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero-headline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.8rem, 5vw, 4.2rem);
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 22px;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    .hero-headline em {
+      font-style: italic;
       color: var(--gold);
     }
-    .brand-feature-icon svg { width: 16px; height: 16px; }
-    .brand-bg-circles {
-      position: absolute; inset: 0; z-index: 1;
-    }
-    .bc { position: absolute; border-radius: 50%; border: 1px solid rgba(201,150,12,0.08); }
-    .bc1 { width:400px; height:400px; top:-100px; left:-100px; }
-    .bc2 { width:300px; height:300px; bottom:-50px; right:-80px; }
-    .bc3 { width:200px; height:200px; top:50%; left:50%; transform:translate(-50%,-50%); }
 
-    /* Right form panel */
-    .auth-form-panel {
-      width: 480px; max-width: 100%; background: var(--white);
-      display: flex; flex-direction: column; justify-content: center; padding: 60px 48px;
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 460px;
+      margin-bottom: 40px;
+      font-weight: 400;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+
+    .btn-primary-lg {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 30px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: 100px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      box-shadow: 0 8px 28px rgba(11,30,61,0.22);
+    }
+
+    .btn-primary-lg:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(11,30,61,0.3);
+      background: var(--navy-light);
+    }
+
+    .btn-secondary-lg {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 26px;
+      background: transparent;
+      color: var(--navy);
+      border: 1.5px solid rgba(11,30,61,0.18);
+      border-radius: 100px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-secondary-lg:hover {
+      border-color: var(--navy);
+      background: rgba(11,30,61,0.04);
+    }
+
+    .hero-trust {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 44px;
+      animation: fadeUp 0.6s ease 0.4s both;
+    }
+
+    .trust-avatars {
+      display: flex;
+    }
+
+    .trust-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--off-white);
+      background: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-left: -8px;
+      flex-shrink: 0;
+    }
+
+    .trust-avatar:first-child { margin-left: 0; }
+
+    .trust-text {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .trust-text strong {
+      color: var(--navy);
+      font-weight: 600;
+    }
+
+    /* ── HERO RIGHT (auth card) ── */
+    .hero-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 80px 80px 40px;
       position: relative;
+      z-index: 2;
     }
 
-    /* Tab switcher */
-    .auth-tabs {
-      display: flex; background: var(--off-white, #f7f8fa);
-      border-radius: 12px; padding: 4px; margin-bottom: 32px; gap: 4px;
+    /* Decorative BG */
+    .hero-bg-shape {
+      position: absolute;
+      top: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(196,154,12,0.06) 0%, transparent 70%);
+      pointer-events: none;
     }
+
+    .hero-bg-shape-2 {
+      position: absolute;
+      bottom: -10%;
+      left: 40%;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(11,30,61,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── AUTH CARD ── */
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow:
+        0 2px 4px rgba(11,30,61,0.04),
+        0 12px 40px rgba(11,30,61,0.1),
+        0 32px 80px rgba(11,30,61,0.08);
+      overflow: hidden;
+      animation: cardRise 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+    }
+
+    @keyframes cardRise {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .auth-card-header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .auth-tabs-row {
+      display: flex;
+      gap: 0;
+      background: var(--cream);
+      border-radius: 10px;
+      padding: 3px;
+    }
+
     .auth-tab {
-      flex: 1; padding: 10px 8px; border: none; border-radius: 9px;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-      background: transparent; color: var(--gray-400, #9ca3af); font-family: 'DM Sans', sans-serif;
-    }
-    .auth-tab.active {
-      background: var(--white); color: var(--navy);
-      box-shadow: 0 2px 8px rgba(15,31,61,0.12);
+      flex: 1;
+      padding: 9px 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
-    /* Panel visibility */
+    .auth-tab svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .auth-tab.active {
+      background: var(--white);
+      color: var(--navy);
+      box-shadow: 0 2px 10px rgba(11,30,61,0.1);
+    }
+
+    .auth-card-body {
+      padding: 28px 32px 32px;
+    }
+
+    /* Auth panel sub-tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .sub-tab {
+      padding: 8px 0 12px;
+      margin-right: 24px;
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      position: relative;
+      transition: color 0.2s;
+    }
+
+    .sub-tab.active {
+      color: var(--navy);
+    }
+
+    .sub-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0; right: 0;
+      height: 2px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    .sub-tab[style*="display:none"] { display: none !important; }
+
     .auth-panel { display: none; }
     .auth-panel.active { display: block; }
 
-    /* Form elements */
-    .auth-title { font-family:'Playfair Display',serif; font-size:1.7rem; color:var(--navy); font-weight:700; margin-bottom:6px; }
-    .auth-sub { font-size:0.85rem; color:var(--gray-400); margin-bottom:28px; line-height:1.5; }
-
-    .auth-form-group { margin-bottom: 18px; }
-    .auth-form-group label { display:block; font-size:0.8rem; font-weight:600; color:var(--navy); margin-bottom:6px; letter-spacing:0.02em; text-transform:uppercase; }
-    .auth-form-group input, .auth-form-group select {
-      width: 100%; padding: 11px 14px; border: 1.5px solid var(--gray-200, #e5e7eb);
-      border-radius: 10px; font-size: 0.92rem; color: var(--navy); background: var(--off-white, #f7f8fa);
-      font-family: 'DM Sans', sans-serif; transition: all 0.2s ease; outline: none; box-sizing: border-box;
-    }
-    .auth-form-group input:focus, .auth-form-group select:focus {
-      border-color: var(--gold); background: var(--white); box-shadow: 0 0 0 3px rgba(201,150,12,0.12);
+    .form-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 4px;
     }
 
-    /* Mode selector */
-    .mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-    .mode-card {
-      padding: 14px 12px; border: 2px solid var(--gray-200, #e5e7eb);
-      border-radius: 10px; cursor: pointer; transition: all 0.2s ease; text-align: center;
-      background: var(--off-white, #f7f8fa);
+    .form-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
     }
-    .mode-card:hover { border-color: var(--gold); }
-    .mode-card.selected { border-color: var(--gold); background: rgba(201,150,12,0.06); }
-    .mode-card-icon {
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 6px; color: var(--gold);
-    }
-    .mode-card-icon svg { width: 22px; height: 22px; }
-    .mode-card-title { font-size: 0.82rem; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
-    .mode-card-desc { font-size: 0.72rem; color: var(--gray-400); line-height: 1.4; }
 
-    /* Buttons */
-    .btn-auth {
-      width: 100%; padding: 13px; background: linear-gradient(135deg, var(--navy) 0%, #1a3260 100%);
-      color: var(--white); border: none; border-radius: 10px; font-size: 0.92rem; font-weight: 700;
-      cursor: pointer; transition: all 0.2s ease; font-family: 'DM Sans', sans-serif;
-      letter-spacing: 0.04em; margin-top: 4px;
-      box-shadow: 0 4px 16px rgba(15,31,61,0.25);
-    }
-    .btn-auth:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(15,31,61,0.32); }
-    .btn-auth:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
-    .btn-auth-secondary {
-      width: 100%; padding: 11px; background: transparent;
-      color: var(--navy); border: 1.5px solid var(--gray-200, #e5e7eb); border-radius: 10px;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s ease; margin-top: 10px;
-    }
-    .btn-auth-secondary:hover { border-color: var(--navy); background: var(--off-white, #f7f8fa); }
+    .field { margin-bottom: 16px; }
 
-    /* Role toggle */
-    .role-toggle {
-      display: flex; background: var(--off-white, #f7f8fa);
-      border-radius: 10px; padding: 4px; margin-bottom: 24px; gap: 4px;
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
     }
-    .role-btn {
-      flex: 1; padding: 9px; border: none; border-radius: 8px; font-size: 0.83rem;
-      font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-      background: transparent; color: var(--gray-400); font-family: 'DM Sans', sans-serif;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
-    }
-    .role-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-    .role-btn.active { background: var(--white); color: var(--navy); box-shadow: 0 2px 8px rgba(15,31,61,0.1); }
 
-    /* Student login section */
-    .student-login-divider {
-      display: flex; align-items: center; gap: 12px; margin: 20px 0;
-      color: var(--gray-400); font-size: 0.75rem;
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid rgba(11,30,61,0.12);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--navy);
+      background: var(--off-white);
+      outline: none;
+      transition: all 0.2s ease;
     }
-    .student-login-divider::before, .student-login-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--gray-200, #e5e7eb);
-    }
-    .student-info-note {
-      background: rgba(201,150,12,0.06); border: 1px solid rgba(201,150,12,0.2);
-      border-radius: 10px; padding: 12px 14px; font-size: 0.8rem;
-      color: var(--navy); line-height: 1.6; margin-bottom: 20px;
-    }
-    .student-info-note strong { color: var(--gold, #c9960c); }
 
-    /* Error / success messages */
-    .auth-error {
-      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
-      border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #dc2626;
-      margin-bottom: 14px; display: none;
+    .field input:focus {
+      border-color: var(--gold);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(196,154,12,0.1);
     }
+
+    .field input::placeholder { color: #B0B0B0; }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .field-row label {
+      margin-bottom: 0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .link-small {
+      font-size: 0.78rem;
+      color: var(--gold);
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .link-small:hover { text-decoration: underline; }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .mode-option {
+      padding: 12px 10px;
+      border: 1.5px solid rgba(11,30,61,0.12);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      background: var(--off-white);
+    }
+
+    .mode-option:hover { border-color: var(--gold); }
+    .mode-option.selected {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+    }
+
+    .mode-option-icon { color: var(--gold); margin-bottom: 4px; display: flex; justify-content: center; }
+    .mode-option-icon svg { width: 18px; height: 18px; }
+    .mode-option-title { font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+    .mode-option-desc { font-size: 0.7rem; color: var(--text-muted); line-height: 1.3; margin-top: 2px; }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.03em;
+      margin-top: 6px;
+      box-shadow: 0 4px 16px rgba(11,30,61,0.2);
+    }
+
+    .btn-submit:hover {
+      background: var(--navy-light);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(11,30,61,0.28);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-ghost-full {
+      width: 100%;
+      padding: 11px;
+      background: transparent;
+      color: var(--navy);
+      border: 1.5px solid rgba(11,30,61,0.12);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .btn-ghost-full:hover {
+      border-color: var(--navy);
+      background: rgba(11,30,61,0.03);
+    }
+
+    .auth-err {
+      background: rgba(220,38,38,0.07);
+      border: 1px solid rgba(220,38,38,0.2);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: 0.8rem;
+      color: #B91C1C;
+      margin-bottom: 14px;
+      display: none;
+    }
+
     .auth-success {
-      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25);
-      border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #16a34a;
-      margin-bottom: 14px; display: none;
+      background: rgba(21,128,61,0.07);
+      border: 1px solid rgba(21,128,61,0.2);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-size: 0.8rem;
+      color: #15803D;
+      margin-bottom: 14px;
+      display: none;
     }
 
-    /* Forgot password link */
-    .forgot-link {
-      font-size: 0.8rem; color: var(--gold, #c9960c); cursor: pointer;
-      text-decoration: none; float: right; margin-top: -4px;
-    }
-    .forgot-link:hover { text-decoration: underline; }
-
-    /* Footer */
-    .auth-footer {
-      font-size: 0.75rem; color: var(--gray-400); text-align: center; margin-top: 28px;
-      line-height: 1.8; border-top: 1px solid var(--gray-200, #e5e7eb); padding-top: 20px;
+    .student-note {
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-border);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 0.78rem;
+      color: var(--navy);
+      line-height: 1.6;
+      margin-bottom: 18px;
     }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      .auth-brand { display: none; }
-      .auth-form-panel { width: 100%; padding: 40px 28px; }
+    .student-note strong { color: var(--gold); }
+
+    /* ── FEATURES SECTION ── */
+    .section {
+      position: relative;
+      z-index: 1;
+      padding: 100px 80px;
     }
-    @media (max-width: 480px) {
-      .auth-form-panel { padding: 32px 20px; }
-      .auth-title { font-size: 1.4rem; }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
     }
+
+    .section-label::before {
+      content: '';
+      width: 20px; height: 1.5px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    .section-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      max-width: 560px;
+      margin-bottom: 16px;
+    }
+
+    .section-heading em { font-style: italic; color: var(--gold); }
+
+    .section-sub {
+      font-size: 1rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 520px;
+      margin-bottom: 60px;
+    }
+
+    /* Features grid */
+    .features-bg {
+      background: var(--white);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .feature-cell {
+      padding: 36px 32px;
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-cell:hover { background: var(--off-white); }
+    .feature-cell:nth-child(3n) { border-right: none; }
+    .feature-cell:nth-last-child(-n+3) { border-bottom: none; }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(11,30,61,0.06);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 18px;
+      color: var(--navy);
+      transition: background 0.25s;
+    }
+
+    .feature-icon svg { width: 20px; height: 20px; }
+
+    .feature-cell:hover .feature-icon {
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-desc {
+      font-size: 0.87rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how-section {
+      background: var(--navy);
+      overflow: hidden;
+    }
+
+    .how-section .section-label { color: var(--gold); }
+    .how-section .section-heading { color: var(--white); max-width: 100%; }
+    .how-section .section-sub { color: rgba(255,255,255,0.55); max-width: 100%; }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 40px;
+      left: calc(12.5% + 20px);
+      right: calc(12.5% + 20px);
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      pointer-events: none;
+    }
+
+    .step-item {
+      padding: 0 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-num {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: rgba(196,154,12,0.15);
+      border: 1px solid rgba(196,154,12,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin: 0 auto 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+
+    .step-desc {
+      font-size: 0.84rem;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+    }
+
+    /* ── SOCIAL PROOF ── */
+    .proof-section {
+      background: var(--off-white);
+    }
+
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .proof-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      position: relative;
+    }
+
+    .proof-card::before {
+      content: '"';
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 5rem;
+      line-height: 1;
+      color: var(--gold);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .proof-stars {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 16px;
+    }
+
+    .proof-stars span {
+      width: 14px; height: 14px;
+      color: var(--gold);
+      font-size: 14px;
+    }
+
+    .proof-text {
+      font-size: 0.92rem;
+      color: var(--text-body);
+      line-height: 1.7;
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    .proof-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .proof-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .proof-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .proof-role {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* ── STATS ── */
+    .stats-bar {
+      background: var(--cream);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 80px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      border-right: 1px solid var(--border);
+      padding: 0 20px;
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-num span { color: var(--gold); }
+
+    .stat-label {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ── PRICING ── */
+    .pricing-section {
+      background: var(--white);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .pricing-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      position: relative;
+      background: var(--white);
+      transition: all 0.25s ease;
+    }
+
+    .pricing-card:hover {
+      box-shadow: 0 12px 40px rgba(11,30,61,0.08);
+      transform: translateY(-2px);
+    }
+
+    .pricing-card.featured {
+      border-color: var(--navy);
+      background: var(--navy);
+    }
+
+    .pricing-featured-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: var(--navy);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .pricing-plan {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+
+    .pricing-price {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .pricing-card.featured .pricing-price { color: var(--white); }
+
+    .pricing-price-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .pricing-card.featured .pricing-price-sub { color: rgba(255,255,255,0.5); }
+
+    .pricing-divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 24px;
+    }
+
+    .pricing-card.featured .pricing-divider { background: rgba(255,255,255,0.1); }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 28px;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.87rem;
+      color: var(--text-body);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .pricing-card.featured .pricing-features li { color: rgba(255,255,255,0.75); }
+
+    .check-icon {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: rgba(21,128,61,0.12);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .check-icon svg { width: 10px; height: 10px; stroke: #15803D; }
+    .pricing-card.featured .check-icon { background: rgba(196,154,12,0.2); }
+    .pricing-card.featured .check-icon svg { stroke: var(--gold); }
+
+    .btn-pricing {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-pricing-outline {
+      background: transparent;
+      color: var(--navy);
+      border: 1.5px solid rgba(11,30,61,0.2);
+    }
+
+    .btn-pricing-outline:hover {
+      border-color: var(--navy);
+      background: rgba(11,30,61,0.04);
+    }
+
+    .btn-pricing-gold {
+      background: var(--gold);
+      color: var(--navy);
+      border: none;
+      box-shadow: 0 4px 16px rgba(196,154,12,0.3);
+    }
+
+    .btn-pricing-gold:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      background: var(--navy);
+      padding: 120px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px; height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(196,154,12,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-section .section-heading { color: var(--white); max-width: 700px; margin: 0 auto 16px; }
+    .cta-section .section-sub { color: rgba(255,255,255,0.55); margin: 0 auto 44px; }
+
+    .cta-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-cta-gold {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 15px 34px;
+      background: var(--gold);
+      color: var(--navy);
+      border: none;
+      border-radius: 100px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 6px 24px rgba(196,154,12,0.3);
+    }
+
+    .btn-cta-gold:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(196,154,12,0.4);
+    }
+
+    .btn-cta-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 15px 28px;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 100px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cta-ghost:hover {
+      color: var(--white);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy-mid);
+      padding: 48px 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-logo-mark {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(196,154,12,0.15);
+      border: 1px solid rgba(196,154,12,0.25);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .footer-logo-mark img { width: 18px; height: 18px; object-fit: contain; opacity: 0.8; }
+
+    .footer-brand {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.5;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: rgba(255,255,255,0.75); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── MOBILE NAV ── */
+    .nav-mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--navy);
+      padding: 4px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-left { padding: 60px 40px 40px; text-align: center; align-items: center; }
+      .hero-right { padding: 0 40px 80px; }
+      .hero-sub { max-width: 100%; }
+      .hero-actions { justify-content: center; }
+      .hero-trust { justify-content: center; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .feature-cell:nth-child(2n) { border-right: none; }
+      .feature-cell:nth-child(3n) { border-right: 1px solid var(--border); }
+      .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+      .steps-grid::before { display: none; }
+      .proof-grid { grid-template-columns: 1fr 1fr; }
+      .section { padding: 80px 40px; }
+      .stats-bar { padding: 48px 40px; }
+      .cta-section { padding: 80px 40px; }
+      footer { padding: 40px; }
+      .nav-links { display: none; }
+      .nav-mobile-toggle { display: block; }
+    }
+
+    @media (max-width: 700px) {
+      nav { padding: 0 20px; }
+      .hero-left { padding: 40px 20px 32px; }
+      .hero-right { padding: 0 20px 60px; }
+      .section { padding: 60px 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .feature-cell:nth-child(n) { border-right: none; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .proof-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 40px 20px; gap: 24px; }
+      .stat-item { border-right: none; }
+      .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
+      .cta-section { padding: 60px 20px; }
+      footer { flex-direction: column; gap: 24px; padding: 32px 20px; text-align: center; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+      .auth-card-body { padding: 22px 22px 28px; }
+      .auth-card-header { padding: 22px 22px 16px; }
+    }
+
+    /* student login toggle */
+    #studentToggleText {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 14px;
+      cursor: pointer;
+    }
+
+    #studentToggleText a { color: var(--gold); }
   </style>
 </head>
 <body>
 
-<div class="auth-split">
+<!-- ── NAVIGATION ──────────────────────────────────────── -->
+<nav id="mainNav">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">
+      <img src="./assets/images/VELUNE.jpg" alt="Velune" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-family:serif;color:#C49A0C;font-weight:700;font-size:1rem\'>V</span>'"/>
+    </div>
+    <span class="nav-logo-name">Velune</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a class="btn-nav-ghost" onclick="scrollToAuth('signin')">Sign in</a>
+    <a class="btn-nav-primary" onclick="scrollToAuth('register')">Start free trial</a>
+  </div>
+  <button class="nav-mobile-toggle" onclick="scrollToAuth('register')" aria-label="Get started">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+</nav>
 
-  <!-- ── LEFT BRAND PANEL ─────────────────────────────────────── -->
-  <div class="auth-brand">
-    <div class="brand-content">
-      <div class="brand-logo-wrap">
-        <img src="./assets/images/VELUNE.jpg" width="44" height="44" alt="Velune" style="object-fit:contain"/>
+<!-- ── HERO ────────────────────────────────────────────── -->
+<section class="hero" id="top">
+  <div class="hero-bg-shape"></div>
+  <div class="hero-bg-shape-2"></div>
+
+  <!-- Left: copy -->
+  <div class="hero-left">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      1-month free trial · No credit card required
+    </div>
+    <h1 class="hero-headline">
+      The smarter way to<br><em>manage payments</em><br>at your centre.
+    </h1>
+    <p class="hero-sub">
+      Velune is the all-in-one payment management system built for tutorial centres. Track fees, manage VIP access, send WhatsApp reminders — all from one clean dashboard.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-primary-lg" onclick="scrollToAuth('register')">
+        Get started free
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </a>
+      <a class="btn-secondary-lg" href="#how-it-works">
+        See how it works
+      </a>
+    </div>
+    <div class="hero-trust">
+      <div class="trust-avatars">
+        <div class="trust-avatar">EA</div>
+        <div class="trust-avatar">BK</div>
+        <div class="trust-avatar">OF</div>
+        <div class="trust-avatar">MM</div>
       </div>
-      <div class="brand-app-name">Velune</div>
-      <div class="brand-tagline">The complete payment management system<br>for tutorial centres. Simple. Powerful. Secured.</div>
-      <div class="brand-features">
+      <p class="trust-text">
+        <strong>Trusted by 200+ tutorial centres</strong><br>across Nigeria. Start your free trial today.
+      </p>
+    </div>
+  </div>
 
-        <div class="brand-feature">
-          <div class="brand-feature-icon">
-            <!-- Graduation cap -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Right: auth card -->
+  <div class="hero-right">
+    <div class="auth-card" id="authCard">
+
+      <div class="auth-card-header">
+        <div class="auth-tabs-row">
+          <button class="auth-tab active" id="tabAdminBtn" onclick="switchMainTab('admin')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Admin Login
+          </button>
+          <button class="auth-tab" id="tabStudentBtn" onclick="switchMainTab('student')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
               <path d="M6 12v5c3 3 9 3 12 0v-5"/>
             </svg>
-          </div>
-          <span>Student portal — each student checks their own status</span>
+            Student Login
+          </button>
         </div>
-
-        <div class="brand-feature">
-          <div class="brand-feature-icon">
-            <!-- Credit card -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="5" width="20" height="14" rx="2"/>
-              <line x1="2" y1="10" x2="22" y2="10"/>
-            </svg>
-          </div>
-          <span>Full payment tracking with WhatsApp receipt confirmations</span>
-        </div>
-
-        <div class="brand-feature">
-          <div class="brand-feature-icon">
-            <!-- Star / VIP badge -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-          </div>
-          <span>VIP access management with monthly cycle countdowns</span>
-        </div>
-
-        <div class="brand-feature">
-          <div class="brand-feature-icon">
-            <!-- Bell -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </div>
-          <span>Automatic alerts for expiring student access cycles</span>
-        </div>
-
-        <div class="brand-feature">
-          <div class="brand-feature-icon">
-            <!-- Lock -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </div>
-          <span>Your data is completely private — nobody else can see it</span>
-        </div>
-
       </div>
-    </div>
-    <div class="brand-bg-circles">
-      <span class="bc bc1"></span><span class="bc bc2"></span><span class="bc bc3"></span>
+
+      <!-- ── ADMIN PANEL ── -->
+      <div class="auth-card-body" id="panel-admin">
+        <div class="sub-tabs">
+          <button class="sub-tab active" id="stSignin" onclick="switchAuthTab('signin')">Sign in</button>
+          <button class="sub-tab" id="stRegister" onclick="switchAuthTab('register')">Create account</button>
+          <button class="sub-tab" id="stForgot" onclick="switchAuthTab('forgot')" style="display:none">Reset</button>
+        </div>
+
+        <!-- Sign In -->
+        <div class="auth-panel active" id="panel-signin">
+          <div class="form-title">Welcome back</div>
+          <div class="form-sub">Access your centre's dashboard.</div>
+          <div class="auth-err" id="signinError"></div>
+          <div class="field">
+            <label>Email address</label>
+            <input type="email" id="signinEmail" placeholder="you@centre.com" autocomplete="email"/>
+          </div>
+          <div class="field">
+            <div class="field-row">
+              <label>Password</label>
+              <a class="link-small" onclick="switchAuthTab('forgot')">Forgot?</a>
+            </div>
+            <input type="password" id="signinPassword" placeholder="••••••••" autocomplete="current-password"/>
+          </div>
+          <button class="btn-submit" id="signinBtn" onclick="handleSignIn()">Sign in to dashboard</button>
+          <button class="btn-ghost-full" onclick="switchAuthTab('register')">No account? Create one free →</button>
+        </div>
+
+        <!-- Register -->
+        <div class="auth-panel" id="panel-register">
+          <div class="form-title">Start for free</div>
+          <div class="form-sub">1-month free trial. No card needed.</div>
+          <div class="auth-err" id="registerError"></div>
+          <div class="auth-success" id="registerSuccess"></div>
+          <div class="field">
+            <label>Centre name</label>
+            <input type="text" id="regCentreName" placeholder="e.g. Excel Tutors, 360 Academy"/>
+          </div>
+          <div class="field">
+            <label>Email address</label>
+            <input type="email" id="regEmail" placeholder="you@centre.com" autocomplete="email"/>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password"/>
+          </div>
+          <div class="field">
+            <label>Payment mode</label>
+            <div class="mode-grid">
+              <div class="mode-option selected" id="modeRecurring" onclick="selectMode('recurring')">
+                <div class="mode-option-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                </div>
+                <div class="mode-option-title">Recurring</div>
+                <div class="mode-option-desc">Monthly cycles with VIP timers</div>
+              </div>
+              <div class="mode-option" id="modeOneTime" onclick="selectMode('one_time')">
+                <div class="mode-option-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+                <div class="mode-option-title">One-Time</div>
+                <div class="mode-option-desc">Single payment, no timers</div>
+              </div>
+            </div>
+            <input type="hidden" id="selectedMode" value="recurring"/>
+          </div>
+          <button class="btn-submit" id="registerBtn" onclick="handleRegister()">Create free account</button>
+          <button class="btn-ghost-full" onclick="switchAuthTab('signin')">Already have an account? Sign in →</button>
+        </div>
+
+        <!-- Forgot Password -->
+        <div class="auth-panel" id="panel-forgot">
+          <div class="form-title">Reset password</div>
+          <div class="form-sub">We'll send a reset link to your email.</div>
+          <div class="auth-err" id="forgotError"></div>
+          <div class="auth-success" id="forgotSuccess"></div>
+          <div class="field">
+            <label>Email address</label>
+            <input type="email" id="forgotEmail" placeholder="you@centre.com"/>
+          </div>
+          <button class="btn-submit" id="forgotBtn" onclick="handleForgotPassword()">Send reset link</button>
+          <button class="btn-ghost-full" onclick="switchAuthTab('signin')">← Back to sign in</button>
+        </div>
+      </div>
+
+      <!-- ── STUDENT PANEL ── -->
+      <div class="auth-card-body auth-panel" id="panel-student">
+        <div class="form-title">Student Login</div>
+        <div class="form-sub">View your fees, payment history and access status.</div>
+
+        <!-- Recurring: Login ID -->
+        <div id="studentRecurringPanel">
+          <div class="student-note">
+            Your <strong>Login ID</strong> (e.g. STU-AB12CD) was given to you when you enrolled. Ask your admin if you've lost it.
+          </div>
+          <div class="auth-err" id="studentRecurringError"></div>
+          <div class="field">
+            <label>Your Login ID</label>
+            <input type="text" id="studentLoginId" placeholder="STU-XXXXXX" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-weight:700;font-size:1rem;text-align:center"/>
+          </div>
+          <button class="btn-submit" id="studentRecurringBtn" onclick="handleStudentLoginById()">View my dashboard</button>
+        </div>
+
+        <!-- One-time: Name + PIN -->
+        <div id="studentOneTimePanel" style="display:none">
+          <div class="student-note">
+            Enter your <strong>Full Name</strong> and the <strong>4-digit PIN</strong> your admin gave you.
+          </div>
+          <div class="auth-err" id="studentOneTimeError"></div>
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="studentName" placeholder="Enter your full name"/>
+          </div>
+          <div class="field">
+            <label>4-Digit PIN</label>
+            <input type="password" id="studentPin" placeholder="••••" maxlength="4" style="text-align:center;letter-spacing:0.4em;font-size:1.2rem;font-weight:700"/>
+          </div>
+          <button class="btn-submit" id="studentOneTimeBtn" onclick="handleStudentLoginByPin()">View my record</button>
+        </div>
+
+        <div id="studentToggleText">
+          Using PIN to log in? <a onclick="toggleStudentPanel()">Switch to PIN login</a>
+        </div>
+      </div>
+
     </div>
   </div>
+</section>
 
-  <!-- ── RIGHT FORM PANEL ─────────────────────────────────────── -->
-  <div class="auth-form-panel">
 
-    <!-- Tab switcher: Admin auth / Student login -->
-    <div class="role-toggle" style="margin-bottom:0">
-      <button class="role-btn active" id="tabAdminBtn" onclick="switchMainTab('admin')">
-        <!-- Shield icon -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+<!-- ── FEATURES ──────────────────────────────────────── -->
+<section class="section features-bg" id="features">
+  <div class="section-label reveal">Everything you need</div>
+  <h2 class="section-heading reveal">Built for how tutorial<br>centres <em>actually</em> work.</h2>
+  <p class="section-sub reveal">Every feature in Velune was designed around real problems faced by Nigerian tutorial centre owners — not generic software repurposed for education.</p>
+
+  <div class="features-grid reveal">
+
+    <div class="feature-cell">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </div>
+      <div class="feature-title">Student Dashboard Portal</div>
+      <div class="feature-desc">Each student gets their own login to check fee status, payment history, VIP status and access countdown — without bothering the admin.</div>
+    </div>
+
+    <div class="feature-cell">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
         </svg>
-        Admin / Centre Owner
-      </button>
-      <button class="role-btn" id="tabStudentBtn" onclick="switchMainTab('student')">
-        <!-- Graduation cap icon -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </div>
+      <div class="feature-title">VIP Access Management</div>
+      <div class="feature-desc">Students who complete payment are automatically granted VIP access with a serial number. Grant or remove temporary access anytime.</div>
+    </div>
+
+    <div class="feature-cell">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
-        Student Login
-      </button>
+      </div>
+      <div class="feature-title">Monthly Cycle Countdowns</div>
+      <div class="feature-desc">Track exactly how many days remain in each student's subscription cycle. Visual timers turn amber and red as expiry approaches.</div>
     </div>
 
-    <!-- ════════════ ADMIN SECTION ════════════ -->
-    <div class="auth-panel active" id="panel-admin" style="margin-top:28px">
-
-      <!-- Sub-tabs: Sign In / Register -->
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
-        <button class="auth-tab"        id="tabRegister" onclick="switchAuthTab('register')">Create Account</button>
-        <button class="auth-tab"        id="tabForgot" onclick="switchAuthTab('forgot')" style="display:none">Reset Password</button>
+    <div class="feature-cell">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.95 12.4a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.86 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
       </div>
-
-      <!-- ── SIGN IN ── -->
-      <div class="auth-panel active" id="panel-signin">
-        <div class="auth-title">Welcome back</div>
-        <div class="auth-sub">Sign in to access your centre's dashboard.</div>
-        <div class="auth-error" id="signinError"></div>
-        <div class="auth-form-group">
-          <label>Email Address</label>
-          <input type="email" id="signinEmail" placeholder="you@centre.com" autocomplete="email"/>
-        </div>
-        <div class="auth-form-group">
-          <label>
-            Password
-            <a class="forgot-link" onclick="switchAuthTab('forgot')">Forgot password?</a>
-          </label>
-          <input type="password" id="signinPassword" placeholder="••••••••" autocomplete="current-password"/>
-        </div>
-        <button class="btn-auth" id="signinBtn" onclick="handleSignIn()">Sign In to Dashboard</button>
-        <button class="btn-auth-secondary" onclick="switchAuthTab('register')">Don't have an account? Create one free →</button>
-      </div>
-
-      <!-- ── REGISTER ── -->
-      <div class="auth-panel" id="panel-register">
-        <div class="auth-title">Create your account</div>
-        <div class="auth-sub">Start your 1-month free trial. Your data stays private.</div>
-        <div class="auth-error" id="registerError"></div>
-        <div class="auth-success" id="registerSuccess"></div>
-        <div class="auth-form-group">
-          <label>Centre Name</label>
-          <input type="text" id="regCentreName" placeholder="e.g. Excel Tutors, 360 Academy"/>
-        </div>
-        <div class="auth-form-group">
-          <label>Email Address</label>
-          <input type="email" id="regEmail" placeholder="you@centre.com" autocomplete="email"/>
-        </div>
-        <div class="auth-form-group">
-          <label>Password (min. 6 characters)</label>
-          <input type="password" id="regPassword" placeholder="Create a strong password" autocomplete="new-password"/>
-        </div>
-        <div class="auth-form-group">
-          <label>Choose Your Payment Mode</label>
-          <div class="mode-cards">
-
-            <div class="mode-card selected" id="modeRecurring" onclick="selectMode('recurring')">
-              <div class="mode-card-icon">
-                <!-- Recurring / refresh arrows -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="23 4 23 10 17 10"/>
-                  <polyline points="1 20 1 14 7 14"/>
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                </svg>
-              </div>
-              <div class="mode-card-title">Recurring</div>
-              <div class="mode-card-desc">Monthly cycles with countdown & VIP access timers</div>
-            </div>
-
-            <div class="mode-card" id="modeOneTime" onclick="selectMode('one_time')">
-              <div class="mode-card-icon">
-                <!-- Checkmark circle -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <div class="mode-card-title">One-Time</div>
-              <div class="mode-card-desc">Single payment — no timers or monthly cycles</div>
-            </div>
-
-          </div>
-          <input type="hidden" id="selectedMode" value="recurring"/>
-        </div>
-        <button class="btn-auth" id="registerBtn" onclick="handleRegister()">Create Free Account</button>
-        <button class="btn-auth-secondary" onclick="switchAuthTab('signin')">Already have an account? Sign in →</button>
-      </div>
-
-      <!-- ── FORGOT PASSWORD ── -->
-      <div class="auth-panel" id="panel-forgot">
-        <div class="auth-title">Reset your password</div>
-        <div class="auth-sub">Enter your email and we'll send you a reset link.</div>
-        <div class="auth-error" id="forgotError"></div>
-        <div class="auth-success" id="forgotSuccess"></div>
-        <div class="auth-form-group">
-          <label>Email Address</label>
-          <input type="email" id="forgotEmail" placeholder="you@centre.com"/>
-        </div>
-        <button class="btn-auth" id="forgotBtn" onclick="handleForgotPassword()">Send Reset Link</button>
-        <button class="btn-auth-secondary" onclick="switchAuthTab('signin')">← Back to Sign In</button>
-      </div>
-
+      <div class="feature-title">WhatsApp Payment Reminders</div>
+      <div class="feature-desc">Send personalised payment reminders directly via WhatsApp with one click — pre-filled with the student's name, balance, and due date.</div>
     </div>
 
-    <!-- ════════════ STUDENT SECTION ════════════ -->
-    <div class="auth-panel" id="panel-student" style="margin-top:28px">
-      <div class="auth-title" style="color:var(--navy)">Student Login</div>
-      <div class="auth-sub">View your fee status, payment record, and access countdown.</div>
-
-      <!-- Recurring mode: Login ID -->
-      <div id="studentRecurringPanel">
-        <div class="student-info-note">
-          Your <strong>Login ID</strong> (e.g. STU-AB12CD) was given to you when you registered. Contact your admin if you've forgotten it.
-        </div>
-        <div class="auth-error" id="studentRecurringError"></div>
-        <div class="auth-form-group">
-          <label>Your Login ID</label>
-          <input type="text" id="studentLoginId" placeholder="STU-XXXXXX" autocomplete="off" style="text-transform:uppercase; letter-spacing:0.1em; font-weight:700; font-size:1rem; text-align:center"/>
-        </div>
-        <button class="btn-auth" id="studentRecurringBtn" onclick="handleStudentLoginById()">View My Dashboard</button>
+    <div class="feature-cell">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
       </div>
-
-      <!-- One-time mode: Name + PIN -->
-      <div id="studentOneTimePanel" style="display:none">
-        <div class="student-info-note">
-          Your <strong>Full Name</strong> and <strong>4-digit PIN</strong> were given to you when you registered. Contact your admin if you need help.
-        </div>
-        <div class="auth-error" id="studentOneTimeError"></div>
-        <div class="auth-form-group">
-          <label>Full Name</label>
-          <input type="text" id="studentName" placeholder="Enter your full name"/>
-        </div>
-        <div class="auth-form-group">
-          <label>4-Digit PIN</label>
-          <input type="password" id="studentPin" placeholder="••••" maxlength="4" style="text-align:center; letter-spacing:0.4em; font-size:1.2rem; font-weight:700"/>
-        </div>
-        <button class="btn-auth" id="studentOneTimeBtn" onclick="handleStudentLoginByPin()">View My Record</button>
-      </div>
-
-      <div style="text-align:center; margin-top:20px; font-size:0.78rem; color:var(--gray-400)">
-        Are you a centre admin? <a onclick="switchMainTab('admin')" style="color:var(--gold);cursor:pointer">Sign in here →</a>
-      </div>
+      <div class="feature-title">Live Alerts & Urgent Flags</div>
+      <div class="feature-desc">The alerts panel surfaces students whose VIP cycles expire within 5 days, colour-coded by urgency. Never miss a renewal again.</div>
     </div>
 
-    <div class="auth-footer">
-      Velune v1.0 &nbsp;·&nbsp; Secured by Supabase &nbsp;·&nbsp; Start your 1-month free trial<br>
-      <span id="liveStats">Loading stats...</span>
+    <div class="feature-cell">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <div class="feature-title">CSV Export & Records</div>
+      <div class="feature-desc">Export your complete student roster or payment history to CSV at any time. Full audit trail with void support for correcting errors.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ──────────────────────────────────── -->
+<section class="section how-section" id="how-it-works">
+  <div class="section-label reveal">Simple by design</div>
+  <h2 class="section-heading reveal" style="margin-bottom:14px">From sign-up to running<br><em>in under 10 minutes.</em></h2>
+  <p class="section-sub reveal" style="margin-bottom:72px">No training required. No technical knowledge needed. Velune is designed for centre owners, not IT departments.</p>
+
+  <div class="steps-grid reveal">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-title">Create your account</div>
+      <div class="step-desc">Sign up in seconds with your centre name and email. Choose recurring monthly billing or one-time payment mode.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-title">Add your students</div>
+      <div class="step-desc">Enter each student's name, class and fee. The system automatically generates login credentials and tracks their balance.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-title">Record payments</div>
+      <div class="step-desc">Log payments as they come in. Students who pay in full are automatically promoted to VIP with a serial number.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">4</div>
+      <div class="step-title">Stay in control</div>
+      <div class="step-desc">Monitor who's paid, who's owing, and who's about to expire — all from your dashboard. Send reminders with one tap.</div>
     </div>
   </div>
-</div>
+</section>
 
+<!-- ── TESTIMONIALS ──────────────────────────────────── -->
+<section class="section proof-section">
+  <div class="section-label reveal">Real results</div>
+  <h2 class="section-heading reveal">What centre owners<br><em>are saying.</em></h2>
+  <p class="section-sub reveal" style="margin-bottom:48px">From small home-based tutors to large coaching academies — Velune works for centres of every size.</p>
+
+  <div class="proof-grid reveal">
+    <div class="proof-card">
+      <div class="proof-stars">
+        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+      </div>
+      <p class="proof-text">"Before Velune, I was tracking fees in a notebook. Now I know exactly who has paid, who owes, and who needs a reminder — all on my phone."</p>
+      <div class="proof-author">
+        <div class="proof-avatar">AO</div>
+        <div>
+          <div class="proof-name">Adunola Okonkwo</div>
+          <div class="proof-role">Founder, Bright Minds Academy · Lagos</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-card">
+      <div class="proof-stars">
+        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+      </div>
+      <p class="proof-text">What used to take an hour now takes seconds. The reminder feature is a game changer</p>
+      <div class="proof-author">
+        <div class="proof-avatar">BM</div>
+        <div>
+          <div class="proof-name">Babatunde Morakinyo</div>
+          <div class="proof-role">Director, StepUp Tutors · Abuja</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-card">
+      <div class="proof-stars">
+        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+      </div>
+      <p class="proof-text">"My students love that they can check their own payment status without asking me. The VIP system makes them take their fees more seriously."</p>
+      <div class="proof-author">
+        <div class="proof-avatar">CF</div>
+        <div>
+          <div class="proof-name">Chidinma Festus</div>
+          <div class="proof-role">Owner, Excel Tutorial Centre · Port Harcourt</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING ───────────────────────────────────────── -->
+<section class="section pricing-section" id="pricing">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center">Simple pricing</div>
+    <h2 class="section-heading reveal" style="margin:0 auto 14px;text-align:center">Fair, transparent pricing.<br><em>No surprises.</em></h2>
+    <p class="section-sub reveal" style="margin:0 auto 60px;text-align:center">Start with a full free trial. Upgrade when you're ready — or not at all.</p>
+  </div>
+
+  <div class="pricing-grid reveal">
+
+    <div class="pricing-card">
+      <div class="pricing-plan">Free Trial</div>
+      <div class="pricing-price">₦0</div>
+      <div class="pricing-price-sub">30 days, full access, no card needed</div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          Unlimited students
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          Full payment tracking & history
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          VIP access management
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          Student portal login
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          WhatsApp reminders
+        </li>
+      </ul>
+      <button class="btn-pricing btn-pricing-outline" onclick="scrollToAuth('register')">Start free trial</button>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="pricing-featured-badge">Most Popular</div>
+      <div class="pricing-plan">Licensed Access</div>
+      <div class="pricing-price" style="color:white">Contact us</div>
+      <div class="pricing-price-sub">Activation code · Monthly or term-based</div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          Everything in free trial
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          Activation code for continued access
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          Priority support via WhatsApp
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          CSV exports unlocked
+        </li>
+        <li>
+          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
+          Regular feature updates
+        </li>
+      </ul>
+      <button class="btn-pricing btn-pricing-gold" onclick="scrollToAuth('register')">Get started free</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── CTA ───────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="section-label reveal" style="justify-content:center;color:var(--gold)">Get started today</div>
+  <h2 class="section-heading reveal">Stop chasing payments.<br><em>Start running your centre.</em></h2>
+  <p class="section-sub reveal">Join hundreds of tutorial centres who've already taken control of their payment management. It takes less than 5 minutes to set up.</p>
+  <div class="cta-actions reveal">
+    <a class="btn-cta-gold" onclick="scrollToAuth('register')">
+      Start free — no card needed
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+      </svg>
+    </a>
+    <a class="btn-cta-ghost" onclick="scrollToAuth('signin')">Already have an account? Sign in</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ────────────────────────────────────────── -->
+<footer>
+  <div class="footer-left">
+    <div class="footer-logo-mark">
+      <img src="./assets/images/VELUNE.jpg" alt="Velune" onerror="this.style.display='none'"/>
+    </div>
+    <div>
+      <div class="footer-brand">Velune</div>
+      <div class="footer-copy">© 2025 Velune. All rights reserved.</div>
+    </div>
+  </div>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a onclick="scrollToAuth('signin')" style="cursor:pointer">Sign in</a>
+  </div>
+</footer>
+
+<!-- ── SCRIPTS ───────────────────────────────────────── -->
 <script src="./supabase.js"></script>
 <script>
-// ── Tab switching ────────────────────────────────────────────
+// ── Existing session check ──────────────────────────
+(async function() {
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (session) { window.location.href = './admin.html'; return; }
+    loadLiveStats();
+  } catch(e) {}
+})();
+
+async function loadLiveStats() {
+  try {
+    const { count } = await _supabase.from('profiles').select('*', { count: 'exact', head: true });
+    if (count > 0) {
+      document.querySelectorAll('.trust-text strong').forEach(el => {
+        el.textContent = `Trusted by ${count}+ tutorial centres`;
+      });
+    }
+  } catch(e) {}
+}
+
+// ── Nav scroll effect ───────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// ── Reveal on scroll ────────────────────────────────
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ── Scroll to auth ──────────────────────────────────
+function scrollToAuth(tab) {
+  document.getElementById('authCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (tab === 'signin')   { switchMainTab('admin'); switchAuthTab('signin'); }
+  if (tab === 'register') { switchMainTab('admin'); switchAuthTab('register'); }
+}
+
+// ── Tab switching ───────────────────────────────────
 let activeMainTab = 'admin';
 let selectedMode  = 'recurring';
 
@@ -454,12 +1854,10 @@ function switchMainTab(tab) {
 
 function switchAuthTab(tab) {
   ['signin','register','forgot'].forEach(t => {
-    const panel = document.getElementById('panel-' + t);
-    const tabEl = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-    if (panel) panel.classList.toggle('active', t === tab);
-    if (tabEl) tabEl.classList.toggle('active', t === tab);
+    document.getElementById('panel-' + t)?.classList.toggle('active', t === tab);
+    document.getElementById('st' + t.charAt(0).toUpperCase() + t.slice(1))?.classList.toggle('active', t === tab);
   });
-  const forgotTab = document.getElementById('tabForgot');
+  const forgotTab = document.getElementById('stForgot');
   if (forgotTab) forgotTab.style.display = tab === 'forgot' ? '' : 'none';
 }
 
@@ -470,23 +1868,19 @@ function selectMode(mode) {
   document.getElementById('modeOneTime').classList.toggle('selected', mode === 'one_time');
 }
 
-// ── Check existing session ───────────────────────────────────
-(async function() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (session) { window.location.href = './admin.html'; return; }
-  loadLiveStats();
-})();
-
-async function loadLiveStats() {
-  try {
-    const { count } = await _supabase.from('profiles').select('*', { count: 'exact', head: true });
-    document.getElementById('liveStats').textContent = `${count || 0} tutorial centres using Velune`;
-  } catch(e) {
-    document.getElementById('liveStats').textContent = '';
-  }
+function toggleStudentPanel() {
+  const rp = document.getElementById('studentRecurringPanel');
+  const op = document.getElementById('studentOneTimePanel');
+  const t  = document.getElementById('studentToggleText');
+  const usingId = rp.style.display !== 'none';
+  rp.style.display = usingId ? 'none' : '';
+  op.style.display = usingId ? '' : 'none';
+  t.innerHTML = usingId
+    ? 'Using a Login ID? <a onclick="toggleStudentPanel()">Switch to ID login</a>'
+    : 'Using PIN to log in? <a onclick="toggleStudentPanel()">Switch to PIN login</a>';
 }
 
-// ── Sign In ──────────────────────────────────────────────────
+// ── Sign In ─────────────────────────────────────────
 async function handleSignIn() {
   const email    = document.getElementById('signinEmail').value.trim();
   const password = document.getElementById('signinPassword').value;
@@ -498,22 +1892,21 @@ async function handleSignIn() {
     errEl.textContent = 'Please enter your email and password.';
     errEl.style.display = 'block'; return;
   }
-
-  btn.textContent = 'Signing in...'; btn.disabled = true;
-
-  const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  const { error } = await _supabase.auth.signInWithPassword({ email, password });
   if (error) {
     errEl.textContent = error.message === 'Invalid login credentials'
       ? 'Incorrect email or password. Please try again.'
       : error.message;
     errEl.style.display = 'block';
-    btn.textContent = 'Sign In to Dashboard'; btn.disabled = false;
+    btn.textContent = 'Sign in to dashboard'; btn.disabled = false;
   } else {
+    btn.textContent = 'Redirecting…';
     window.location.href = './admin.html';
   }
 }
 
-// ── Register ─────────────────────────────────────────────────
+// ── Register ────────────────────────────────────────
 async function handleRegister() {
   const centreName = document.getElementById('regCentreName').value.trim();
   const email      = document.getElementById('regEmail').value.trim();
@@ -528,8 +1921,7 @@ async function handleRegister() {
   if (!email)      { errEl.textContent = 'Please enter your email.'; errEl.style.display='block'; return; }
   if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display='block'; return; }
 
-  btn.textContent = 'Creating account...'; btn.disabled = true;
-
+  btn.textContent = 'Creating account…'; btn.disabled = true;
   const { data, error } = await _supabase.auth.signUp({
     email, password,
     options: { data: { centre_name: centreName, mode } }
@@ -537,29 +1929,24 @@ async function handleRegister() {
 
   if (error) {
     errEl.textContent = error.message; errEl.style.display = 'block';
-    btn.textContent = 'Create Free Account'; btn.disabled = false;
-    return;
+    btn.textContent = 'Create free account'; btn.disabled = false; return;
   }
 
-  // Create profile row immediately
   if (data.user) {
-    await _supabase.from('profiles').upsert({
-      id: data.user.id, centre_name: centreName, mode
-    });
+    await _supabase.from('profiles').upsert({ id: data.user.id, centre_name: centreName, mode });
   }
 
-  // If email confirmation is disabled, go straight in
   if (data.session) {
     window.location.href = './admin.html';
   } else {
-    successEl.innerHTML = `&#10003; Account created! Check your email (<strong>${email}</strong>) for a confirmation link, then sign in.`;
+    successEl.innerHTML = `✓ Account created! Check your email (<strong>${email}</strong>) for a confirmation link, then sign in.`;
     successEl.style.display = 'block';
-    btn.textContent = 'Create Free Account'; btn.disabled = false;
+    btn.textContent = 'Create free account'; btn.disabled = false;
     setTimeout(() => switchAuthTab('signin'), 4000);
   }
 }
 
-// ── Forgot Password ──────────────────────────────────────────
+// ── Forgot Password ──────────────────────────────────
 async function handleForgotPassword() {
   const email    = document.getElementById('forgotEmail').value.trim();
   const errEl    = document.getElementById('forgotError');
@@ -568,23 +1955,20 @@ async function handleForgotPassword() {
 
   errEl.style.display = successEl.style.display = 'none';
   if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display='block'; return; }
-
-  btn.textContent = 'Sending...'; btn.disabled = true;
-
+  btn.textContent = 'Sending…'; btn.disabled = true;
   const { error } = await _supabase.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + '/index.html'
   });
-
   if (error) {
     errEl.textContent = error.message; errEl.style.display = 'block';
   } else {
-    successEl.innerHTML = `&#10003; Reset link sent to <strong>${email}</strong>. Check your inbox (and spam folder).`;
+    successEl.innerHTML = `✓ Reset link sent to <strong>${email}</strong>. Check your inbox.`;
     successEl.style.display = 'block';
   }
-  btn.textContent = 'Send Reset Link'; btn.disabled = false;
+  btn.textContent = 'Send reset link'; btn.disabled = false;
 }
 
-// ── Student Login — by Login ID (recurring mode) ─────────────
+// ── Student Login — Login ID ─────────────────────────
 async function handleStudentLoginById() {
   const loginId = document.getElementById('studentLoginId').value.trim().toUpperCase();
   const errEl   = document.getElementById('studentRecurringError');
@@ -592,26 +1976,21 @@ async function handleStudentLoginById() {
 
   errEl.style.display = 'none';
   if (!loginId) { errEl.textContent = 'Please enter your Login ID.'; errEl.style.display='block'; return; }
-
-  btn.textContent = 'Looking up...'; btn.disabled = true;
-
+  btn.textContent = 'Looking up…'; btn.disabled = true;
   const { data: students, error } = await _supabase
     .from('students').select('id, name, owner_id').eq('login_id', loginId).limit(1);
-
-  btn.textContent = 'View My Dashboard'; btn.disabled = false;
-
+  btn.textContent = 'View my dashboard'; btn.disabled = false;
   if (error || !students?.length) {
     errEl.textContent = 'No student found with that Login ID. Contact your admin.';
     errEl.style.display = 'block'; return;
   }
-
   localStorage.setItem('zt_role', 'student');
   localStorage.setItem('zt_student_id', students[0].id);
   localStorage.setItem('zt_owner_id', students[0].owner_id);
   window.location.href = './student.html';
 }
 
-// ── Student Login — by Name + PIN (one_time mode) ────────────
+// ── Student Login — PIN ──────────────────────────────
 async function handleStudentLoginByPin() {
   const name = document.getElementById('studentName').value.trim();
   const pin  = document.getElementById('studentPin').value.trim();
@@ -621,45 +2000,21 @@ async function handleStudentLoginByPin() {
   errEl.style.display = 'none';
   if (!name || !pin) { errEl.textContent = 'Please enter your name and PIN.'; errEl.style.display='block'; return; }
   if (pin.length !== 4 || isNaN(pin)) { errEl.textContent = 'PIN must be exactly 4 digits.'; errEl.style.display='block'; return; }
-
-  btn.textContent = 'Looking up...'; btn.disabled = true;
-
+  btn.textContent = 'Looking up…'; btn.disabled = true;
   const { data: students, error } = await _supabase
     .from('students').select('id, name, owner_id').ilike('name', name).eq('student_pin', pin).limit(1);
-
-  btn.textContent = 'View My Record'; btn.disabled = false;
-
+  btn.textContent = 'View my record'; btn.disabled = false;
   if (error || !students?.length) {
     errEl.textContent = 'No record found. Check your name and PIN and try again.';
     errEl.style.display = 'block'; return;
   }
-
   localStorage.setItem('zt_role', 'student');
   localStorage.setItem('zt_student_id', students[0].id);
   localStorage.setItem('zt_owner_id', students[0].owner_id);
   window.location.href = './student.html';
 }
 
-// ── Detect which student login panel to show ─────────────────
-(function setupStudentToggle() {
-  const recurringPanel = document.getElementById('studentRecurringPanel');
-  const oneTimePanel   = document.getElementById('studentOneTimePanel');
-  const toggle = document.createElement('p');
-  toggle.style.cssText = 'text-align:center; font-size:0.8rem; color:var(--gray-400); margin-top:16px; cursor:pointer';
-  toggle.id = 'studentToggle';
-  toggle.innerHTML = `Using PIN to log in? <a style="color:var(--gold)">Switch to PIN login</a>`;
-  toggle.onclick = function() {
-    const usingId = recurringPanel.style.display !== 'none';
-    recurringPanel.style.display = usingId ? 'none' : '';
-    oneTimePanel.style.display   = usingId ? '' : 'none';
-    toggle.innerHTML = usingId
-      ? `Using a Login ID? <a style="color:var(--gold)">Switch to ID login</a>`
-      : `Using PIN to log in? <a style="color:var(--gold)">Switch to PIN login</a>`;
-  };
-  document.getElementById('panel-student').appendChild(toggle);
-})();
-
-// ── Enter key support ────────────────────────────────────────
+// ── Enter key support ────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   if (activeMainTab === 'student') {
@@ -674,21 +2029,20 @@ document.addEventListener('keydown', e => {
   if (active.id === 'panel-forgot')   handleForgotPassword();
 });
 
-// ── Password reset handler (redirect back) ───────────────────
+// ── Password reset redirect ──────────────────────────
 (async function checkPasswordReset() {
-  const hash = window.location.hash;
-  if (hash.includes('type=recovery')) {
+  if (window.location.hash.includes('type=recovery')) {
     switchAuthTab('forgot');
-    const panel = document.getElementById('panel-forgot');
-    panel.innerHTML = `
-      <div class="auth-title">Set new password</div>
-      <div class="auth-sub">Enter and confirm your new password below.</div>
-      <div class="auth-error" id="resetPwError"></div>
+    document.getElementById('panel-forgot').innerHTML = `
+      <div class="form-title">Set new password</div>
+      <div class="form-sub">Enter and confirm your new password below.</div>
+      <div class="auth-err" id="resetPwError"></div>
       <div class="auth-success" id="resetPwSuccess"></div>
-      <div class="auth-form-group"><label>New Password</label><input type="password" id="newPw1" placeholder="New password (min 6 chars)"/></div>
-      <div class="auth-form-group"><label>Confirm Password</label><input type="password" id="newPw2" placeholder="Confirm password"/></div>
-      <button class="btn-auth" onclick="submitNewPassword()">Update Password</button>
+      <div class="field"><label>New Password</label><input type="password" id="newPw1" placeholder="New password (min 6 chars)"/></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="newPw2" placeholder="Confirm password"/></div>
+      <button class="btn-submit" onclick="submitNewPassword()">Update Password</button>
     `;
+    scrollToAuth('signin');
   }
 })();
 
@@ -697,20 +2051,17 @@ async function submitNewPassword() {
   const pw2   = document.getElementById('newPw2').value;
   const errEl = document.getElementById('resetPwError');
   const sucEl = document.getElementById('resetPwSuccess');
-
   errEl.style.display = sucEl.style.display = 'none';
   if (pw1.length < 6) { errEl.textContent='Password must be at least 6 characters.'; errEl.style.display='block'; return; }
   if (pw1 !== pw2)    { errEl.textContent='Passwords do not match.'; errEl.style.display='block'; return; }
-
   const { error } = await _supabase.auth.updateUser({ password: pw1 });
   if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
   else {
-    sucEl.textContent = '&#10003; Password updated! Redirecting to dashboard...';
+    sucEl.textContent = '✓ Password updated! Redirecting to dashboard…';
     sucEl.style.display = 'block';
     setTimeout(() => window.location.href = './admin.html', 2000);
   }
 }
 </script>
-
 </body>
 </html>
