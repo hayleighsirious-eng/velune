@@ -6,9 +6,8 @@ const SUPABASE_URL  = 'https://cbsoztcgnzhetgalalil.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNic296dGNnbnpoZXRnYWxhbGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzODYzNTQsImV4cCI6MjA5MDk2MjM1NH0.PrdwDAJxSs-ygmIT6ew_TpxvAlHqged1V4mmje15CaI';
 
 // ── Cycle & alert settings ─────────────────────────────────
-// TESTING: set to 5 minutes. Change back to 30 and 5 for production.
-const CYCLE_DAYS = 0.00347; // 5 minutes  ← change to 30 for production
-const ALERT_DAYS = 0.00247; // ~3.5 mins  ← change to 5 for production
+const CYCLE_DAYS = 1;    // 1 day — easy to test
+const ALERT_DAYS = 0.5;  // alerts when < 12 hours left
 
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -118,7 +117,7 @@ async function checkAccess(userId) {
   // 2. Check trial
   if (!profile.trial_end) {
     // First login ever — start 5-minute trial (change to 30 * 86400000 for production)
-    const trialEnd = now + (300000); // 5 minutes ← change to (30 * 86400000) for production
+  const trialEnd = now + (86400000); // 1 day
     await _supabase.from('profiles').update({ trial_end: trialEnd }).eq('id', userId);
     return { allowed: true, daysLeft: 30, reason: 'trial' };
   }
