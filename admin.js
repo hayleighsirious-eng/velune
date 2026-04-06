@@ -965,26 +965,7 @@ async function changePassword() {
   document.getElementById('confirmPasswordInput').value = '';
 }
 
-// ── Delete Account ────────────────────────────────────────────
-async function deleteAccount() {
-  const input = document.getElementById('deleteAccountInput')?.value?.trim();
-  if (input !== 'DELETE') {
-    showToast('Type DELETE to confirm account deletion.', 'error');
-    return;
-  }
 
-  // Delete all student data first
-  await _supabase.from('payments').delete().eq('owner_id', currentUserId);
-  await _supabase.from('students').delete().eq('owner_id', currentUserId);
-  await _supabase.from('profiles').delete().eq('id', currentUserId);
-
-  // Sign out and delete auth account
-  await _supabase.auth.signOut();
-  localStorage.clear();
-
-  showToast('Account deleted. Redirecting...', 'info');
-  setTimeout(() => { window.location.href = './index.html'; }, 1500);
-}
 
 function confirmDeleteAccount() {
   const existing = document.getElementById('deleteAccountModal');
