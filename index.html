@@ -5,74 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Velune — Payment Management for Tutorial Centres</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="./assets/images/favicon-32x32.png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     :root {
-      --navy:        #0B1E3D;
-      --navy-mid:    #132847;
-      --navy-light:  #1E3A60;
-      --gold:        #C49A0C;
-      --gold-light:  #E8B91A;
-      --gold-pale:   rgba(196,154,12,0.08);
-      --gold-border: rgba(196,154,12,0.25);
+      --ink:         #0A0A0A;
+      --ink-2:       #1A1A1A;
+      --ink-3:       #2A2A2A;
+      --dim:         #6B6B6B;
+      --dim-2:       #9A9A9A;
+      --rule:        rgba(255,255,255,0.07);
+      --rule-light:  rgba(0,0,0,0.07);
+      --gold:        #D4A843;
+      --gold-2:      #F0C060;
+      --gold-dim:    rgba(212,168,67,0.12);
+      --gold-rule:   rgba(212,168,67,0.25);
       --white:       #FFFFFF;
-      --off-white:   #F8F7F4;
-      --cream:       #F2EFE8;
-      --text-body:   #3A3A3A;
-      --text-muted:  #7A7A7A;
-      --border:      rgba(11,30,61,0.1);
-      --radius-sm:   8px;
-      --radius-md:   14px;
-      --radius-lg:   22px;
-      --radius-xl:   32px;
+      --off:         #F5F4F1;
+      --surface:     #FAFAF8;
+      --r-sm:        6px;
+      --r-md:        12px;
+      --r-lg:        20px;
+      --r-xl:        28px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--off-white);
-      color: var(--text-body);
+      font-family: 'Geist', sans-serif;
+      background: var(--ink);
+      color: var(--white);
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── NOISE TEXTURE OVERLAY ── */
-    body::before {
+    /* ── GRAIN OVERLAY ── */
+    body::after {
       content: '';
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 0;
-      opacity: 0.025;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-      background-size: 200px 200px;
+      z-index: 9999;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
     }
 
-    /* ── NAV ── */
+    /* ─── NAV ─── */
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
-      z-index: 100;
+      z-index: 500;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 40px;
-      height: 68px;
-      background: rgba(248,247,244,0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      transition: all 0.3s ease;
+      padding: 0 48px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.4s, background 0.4s;
     }
 
     nav.scrolled {
-      background: rgba(248,247,244,0.97);
-      box-shadow: 0 4px 32px rgba(11,30,61,0.06);
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-color: var(--rule);
     }
 
     .nav-logo {
@@ -82,438 +81,412 @@
       text-decoration: none;
     }
 
-    .nav-logo-mark {
-      width: 36px; height: 36px;
-      border-radius: 9px;
+    .nav-logo-icon {
+      width: 32px; height: 32px;
+      border: 1px solid var(--gold-rule);
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      background: var(--gold-dim);
     }
 
-    .nav-logo-mark img {
-      width: 22px; height: 22px;
-      object-fit: contain;
-      
+    .nav-logo-icon svg { width: 16px; height: 16px; stroke: var(--gold); }
+
+    .nav-brand {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.3rem;
+      color: var(--white);
+      letter-spacing: 0.01em;
     }
 
-    .nav-logo-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--navy);
-      letter-spacing: -0.02em;
-    }
-
-    .nav-links {
+    .nav-center {
       display: flex;
-      align-items: center;
-      gap: 32px;
+      gap: 36px;
       list-style: none;
     }
 
-    .nav-links a {
-      font-size: 0.88rem;
-      font-weight: 500;
-      color: var(--text-muted);
+    .nav-center a {
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--dim-2);
       text-decoration: none;
+      letter-spacing: 0.02em;
       transition: color 0.2s;
     }
 
-    .nav-links a:hover { color: var(--navy); }
+    .nav-center a:hover { color: var(--white); }
 
-    .nav-cta {
+    .nav-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .btn-nav-ghost {
-      padding: 9px 20px;
-      border: 1.5px solid var(--border);
+    .btn-ghost-sm {
+      padding: 8px 18px;
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 100px;
-      font-size: 0.84rem;
-      font-weight: 600;
-      color: var(--navy);
-      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
       background: transparent;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s ease;
+      cursor: pointer;
+      font-family: 'Geist', sans-serif;
       text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
     }
 
-    .btn-nav-ghost:hover {
-      border-color: var(--navy);
-      background: rgba(11,30,61,0.04);
+    .btn-ghost-sm:hover {
+      border-color: rgba(255,255,255,0.3);
+      color: var(--white);
     }
 
-    .btn-nav-primary {
-      padding: 9px 22px;
+    .btn-gold-sm {
+      padding: 8px 20px;
       border: none;
       border-radius: 100px;
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: var(--white);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink);
+      background: var(--gold);
       cursor: pointer;
-      background: var(--navy);
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s ease;
+      font-family: 'Geist', sans-serif;
       text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
     }
 
-    .btn-nav-primary:hover {
-      background: var(--navy-light);
+    .btn-gold-sm:hover {
+      background: var(--gold-2);
       transform: translateY(-1px);
     }
 
-    /* ── HERO ── */
+    /* ─── HERO ─── */
     .hero {
       min-height: 100vh;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      padding-top: 68px;
+      padding-top: 64px;
       position: relative;
-      overflow: hidden;
+    }
+
+    /* Ambient glow */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      right: -100px;
+      width: 900px;
+      height: 900px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(212,168,67,0.07) 0%, transparent 65%);
+      pointer-events: none;
     }
 
     .hero-left {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 80px 60px 80px 80px;
+      padding: 100px 64px 100px 80px;
       position: relative;
       z-index: 2;
     }
 
-    .hero-badge {
+    .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 14px 6px 8px;
-      background: var(--gold-pale);
-      border: 1px solid var(--gold-border);
-      border-radius: 100px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--gold);
-      letter-spacing: 0.04em;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin-bottom: 28px;
-      width: fit-content;
-      animation: fadeUp 0.6s ease both;
+      color: var(--gold);
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.1s forwards;
     }
 
-    .hero-badge-dot {
-      width: 6px; height: 6px;
+    .eyebrow-dot {
+      width: 5px; height: 5px;
       border-radius: 50%;
       background: var(--gold);
-      animation: pulse 2s infinite;
+      animation: blink 2.5s ease infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
-    .hero-headline {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.8rem, 5vw, 4.2rem);
-      font-weight: 700;
-      color: var(--navy);
-      line-height: 1.05;
+    .hero-h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(3rem, 5.5vw, 5rem);
+      font-weight: 400;
+      line-height: 1.0;
+      color: var(--white);
       letter-spacing: -0.02em;
-      margin-bottom: 22px;
-      animation: fadeUp 0.6s ease 0.1s both;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.2s forwards;
     }
 
-    .hero-headline em {
+    .hero-h1 em {
       font-style: italic;
       color: var(--gold);
     }
 
-    .hero-sub {
-      font-size: 1.05rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-      max-width: 460px;
-      margin-bottom: 40px;
-      font-weight: 400;
-      animation: fadeUp 0.6s ease 0.2s both;
+    .hero-p {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--dim-2);
+      max-width: 420px;
+      margin-bottom: 48px;
+      font-weight: 300;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.3s forwards;
     }
 
     .hero-actions {
       display: flex;
       align-items: center;
       gap: 14px;
-      flex-wrap: wrap;
-      animation: fadeUp 0.6s ease 0.3s both;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.4s forwards;
     }
 
-    .btn-primary-lg {
+    .btn-primary-xl {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 14px 30px;
-      background: var(--navy);
-      color: var(--white);
+      gap: 10px;
+      padding: 14px 32px;
+      background: var(--gold);
+      color: var(--ink);
       border: none;
       border-radius: 100px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: 'Geist', sans-serif;
       cursor: pointer;
-      transition: all 0.25s ease;
       text-decoration: none;
-      box-shadow: 0 8px 28px rgba(11,30,61,0.22);
+      transition: all 0.25s;
+      letter-spacing: 0.02em;
     }
 
-    .btn-primary-lg:hover {
+    .btn-primary-xl:hover {
+      background: var(--gold-2);
       transform: translateY(-2px);
-      box-shadow: 0 12px 36px rgba(11,30,61,0.3);
-      background: var(--navy-light);
+      box-shadow: 0 16px 48px rgba(212,168,67,0.25);
     }
 
-    .btn-secondary-lg {
+    .btn-line-xl {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 14px 26px;
+      padding: 14px 28px;
       background: transparent;
-      color: var(--navy);
-      border: 1.5px solid rgba(11,30,61,0.18);
+      color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 100px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 400;
+      font-family: 'Geist', sans-serif;
       cursor: pointer;
-      transition: all 0.2s ease;
       text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
     }
 
-    .btn-secondary-lg:hover {
-      border-color: var(--navy);
-      background: rgba(11,30,61,0.04);
+    .btn-line-xl:hover {
+      border-color: rgba(255,255,255,0.3);
+      color: var(--white);
     }
 
-    .hero-trust {
+    .hero-social {
+      margin-top: 64px;
       display: flex;
       align-items: center;
-      gap: 14px;
-      margin-top: 44px;
-      animation: fadeUp 0.6s ease 0.4s both;
+      gap: 16px;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.5s forwards;
     }
 
-    .trust-avatars {
+    .social-faces {
       display: flex;
     }
 
-    .trust-avatar {
-      width: 32px; height: 32px;
+    .social-face {
+      width: 30px; height: 30px;
       border-radius: 50%;
-      border: 2px solid var(--off-white);
-      background: var(--navy);
+      border: 2px solid var(--ink);
+      background: var(--ink-3);
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       font-weight: 700;
       color: var(--gold);
-      margin-left: -8px;
-      flex-shrink: 0;
+      margin-left: -6px;
     }
 
-    .trust-avatar:first-child { margin-left: 0; }
+    .social-face:first-child { margin-left: 0; }
 
-    .trust-text {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      line-height: 1.4;
+    .social-text {
+      font-size: 0.78rem;
+      color: var(--dim);
+      line-height: 1.5;
     }
 
-    .trust-text strong {
-      color: var(--navy);
-      font-weight: 600;
-    }
+    .social-text strong { color: rgba(255,255,255,0.7); font-weight: 500; }
 
-    /* ── HERO RIGHT (auth card) ── */
+    /* ─── HERO RIGHT (auth) ─── */
     .hero-right {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 80px 80px 80px 40px;
+      padding: 100px 80px 100px 40px;
       position: relative;
       z-index: 2;
     }
 
-    /* Decorative BG */
-    .hero-bg-shape {
-      position: absolute;
-      top: -20%;
-      right: -10%;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(196,154,12,0.06) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-bg-shape-2 {
-      position: absolute;
-      bottom: -10%;
-      left: 40%;
-      width: 400px;
-      height: 400px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(11,30,61,0.04) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    /* ── AUTH CARD ── */
     .auth-card {
       width: 100%;
-      max-width: 440px;
-      background: var(--white);
-      border-radius: var(--radius-xl);
-      box-shadow:
-        0 2px 4px rgba(11,30,61,0.04),
-        0 12px 40px rgba(11,30,61,0.1),
-        0 32px 80px rgba(11,30,61,0.08);
+      max-width: 420px;
+      background: var(--ink-2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--r-xl);
       overflow: hidden;
-      animation: cardRise 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+      opacity: 0;
+      animation: riseIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03),
+        0 32px 80px rgba(0,0,0,0.5),
+        0 8px 24px rgba(0,0,0,0.3);
     }
 
-    @keyframes cardRise {
-      from { opacity: 0; transform: translateY(24px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
+    .auth-top {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
-    .auth-card-header {
-      padding: 28px 32px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .auth-tabs-row {
+    .auth-tabs {
       display: flex;
-      gap: 0;
-      background: var(--cream);
+      background: rgba(255,255,255,0.04);
       border-radius: 10px;
       padding: 3px;
+      gap: 3px;
     }
 
     .auth-tab {
       flex: 1;
-      padding: 9px 10px;
+      padding: 9px 12px;
       border: none;
       border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.78rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s ease;
       background: transparent;
-      color: var(--text-muted);
-      font-family: 'DM Sans', sans-serif;
+      color: var(--dim);
+      font-family: 'Geist', sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
     }
 
-    .auth-tab svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .auth-tab svg { width: 13px; height: 13px; flex-shrink: 0; }
 
     .auth-tab.active {
-      background: var(--white);
-      color: var(--navy);
-      box-shadow: 0 2px 10px rgba(11,30,61,0.1);
+      background: rgba(255,255,255,0.07);
+      color: var(--white);
     }
 
-    .auth-card-body {
-      padding: 28px 32px 32px;
-    }
+    .auth-body { padding: 28px; }
 
-    /* Auth panel sub-tabs */
-    .sub-tabs {
+    .auth-subtabs {
       display: flex;
       gap: 0;
-      border-bottom: 2px solid var(--border);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
       margin-bottom: 24px;
     }
 
-    .sub-tab {
-      padding: 8px 0 12px;
-      margin-right: 24px;
+    .auth-stab {
+      padding: 6px 0 14px;
+      margin-right: 22px;
       border: none;
       background: transparent;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--dim);
       cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Geist', sans-serif;
       position: relative;
       transition: color 0.2s;
+      letter-spacing: 0.02em;
     }
 
-    .sub-tab.active {
-      color: var(--navy);
-    }
+    .auth-stab.active { color: var(--white); }
 
-    .sub-tab.active::after {
+    .auth-stab.active::after {
       content: '';
       position: absolute;
-      bottom: -2px;
+      bottom: -1px;
       left: 0; right: 0;
-      height: 2px;
+      height: 1px;
       background: var(--gold);
-      border-radius: 2px;
     }
-
-    .sub-tab[style*="display:none"] { display: none !important; }
 
     .auth-panel { display: none; }
     .auth-panel.active { display: block; }
 
-    .form-title {
-      font-family: 'Cormorant Garamond', serif;
+    .auth-title {
+      font-family: 'Instrument Serif', serif;
       font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--navy);
+      font-weight: 400;
+      color: var(--white);
       margin-bottom: 4px;
+      letter-spacing: -0.01em;
     }
 
-    .form-sub {
-      font-size: 0.82rem;
-      color: var(--text-muted);
+    .auth-sub {
+      font-size: 0.78rem;
+      color: var(--dim);
       margin-bottom: 22px;
-      line-height: 1.5;
+      font-weight: 300;
     }
 
-    .field { margin-bottom: 16px; }
+    .field { margin-bottom: 14px; }
 
     .field label {
       display: block;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--navy);
-      letter-spacing: 0.06em;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--dim-2);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 6px;
     }
 
     .field input {
       width: 100%;
-      padding: 11px 14px;
-      border: 1.5px solid rgba(11,30,61,0.12);
-      border-radius: var(--radius-sm);
-      font-size: 0.9rem;
-      font-family: 'DM Sans', sans-serif;
-      color: var(--navy);
-      background: var(--off-white);
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--r-sm);
+      font-size: 0.88rem;
+      font-family: 'Geist', sans-serif;
+      color: var(--white);
+      background: rgba(255,255,255,0.04);
       outline: none;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     .field input:focus {
-      border-color: var(--gold);
-      background: var(--white);
-      box-shadow: 0 0 0 3px rgba(196,154,12,0.1);
+      border-color: var(--gold-rule);
+      background: rgba(212,168,67,0.04);
+      box-shadow: 0 0 0 3px rgba(212,168,67,0.06);
     }
 
-    .field input::placeholder { color: #B0B0B0; }
+    .field input::placeholder { color: rgba(255,255,255,0.2); }
 
     .field-row {
       display: flex;
@@ -522,24 +495,17 @@
       margin-bottom: 6px;
     }
 
-    .field-row label {
-      margin-bottom: 0;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--navy);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
+    .field-row label { margin-bottom: 0; }
 
-    .link-small {
-      font-size: 0.78rem;
+    .link-xs {
+      font-size: 0.72rem;
       color: var(--gold);
       cursor: pointer;
       text-decoration: none;
-      font-weight: 500;
+      font-weight: 400;
     }
 
-    .link-small:hover { text-decoration: underline; }
+    .link-xs:hover { text-decoration: underline; }
 
     .mode-grid {
       display: grid;
@@ -548,330 +514,435 @@
       margin-bottom: 4px;
     }
 
-    .mode-option {
+    .mode-opt {
       padding: 12px 10px;
-      border: 1.5px solid rgba(11,30,61,0.12);
-      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--r-sm);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
       text-align: center;
-      background: var(--off-white);
+      background: rgba(255,255,255,0.02);
     }
 
-    .mode-option:hover { border-color: var(--gold); }
-    .mode-option.selected {
-      border-color: var(--gold);
-      background: var(--gold-pale);
+    .mode-opt:hover { border-color: var(--gold-rule); }
+
+    .mode-opt.active {
+      border-color: var(--gold-rule);
+      background: var(--gold-dim);
     }
 
-    .mode-option-icon { color: var(--gold); margin-bottom: 4px; display: flex; justify-content: center; }
-    .mode-option-icon svg { width: 18px; height: 18px; }
-    .mode-option-title { font-size: 0.78rem; font-weight: 700; color: var(--navy); }
-    .mode-option-desc { font-size: 0.7rem; color: var(--text-muted); line-height: 1.3; margin-top: 2px; }
+    .mode-opt-icon { color: var(--gold); margin-bottom: 4px; display: flex; justify-content: center; }
+    .mode-opt-icon svg { width: 16px; height: 16px; }
+    .mode-opt-title { font-size: 0.75rem; font-weight: 600; color: var(--white); letter-spacing: 0.02em; }
+    .mode-opt-desc { font-size: 0.67rem; color: var(--dim); line-height: 1.4; margin-top: 2px; }
 
     .btn-submit {
       width: 100%;
-      padding: 13px;
-      background: var(--navy);
-      color: var(--white);
+      padding: 12px;
+      background: var(--gold);
+      color: var(--ink);
       border: none;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      font-family: 'DM Sans', sans-serif;
+      border-radius: var(--r-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'Geist', sans-serif;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
       letter-spacing: 0.03em;
       margin-top: 6px;
-      box-shadow: 0 4px 16px rgba(11,30,61,0.2);
     }
 
     .btn-submit:hover {
-      background: var(--navy-light);
+      background: var(--gold-2);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(11,30,61,0.28);
+      box-shadow: 0 8px 28px rgba(212,168,67,0.2);
     }
 
-    .btn-submit:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    .btn-ghost-full {
+    .btn-outline-full {
       width: 100%;
-      padding: 11px;
+      padding: 10px;
       background: transparent;
-      color: var(--navy);
-      border: 1.5px solid rgba(11,30,61,0.12);
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
+      color: var(--dim-2);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--r-sm);
+      font-size: 0.82rem;
+      font-weight: 400;
+      font-family: 'Geist', sans-serif;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
       margin-top: 8px;
+      letter-spacing: 0.02em;
     }
 
-    .btn-ghost-full:hover {
-      border-color: var(--navy);
-      background: rgba(11,30,61,0.03);
+    .btn-outline-full:hover {
+      border-color: rgba(255,255,255,0.15);
+      color: var(--white);
     }
 
     .auth-err {
-      background: rgba(220,38,38,0.07);
-      border: 1px solid rgba(220,38,38,0.2);
-      border-radius: 8px;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--r-sm);
       padding: 9px 13px;
-      font-size: 0.8rem;
-      color: #B91C1C;
+      font-size: 0.78rem;
+      color: #FCA5A5;
       margin-bottom: 14px;
       display: none;
     }
 
-    .auth-success {
-      background: rgba(21,128,61,0.07);
-      border: 1px solid rgba(21,128,61,0.2);
-      border-radius: 8px;
+    .auth-ok {
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: var(--r-sm);
       padding: 9px 13px;
-      font-size: 0.8rem;
-      color: #15803D;
+      font-size: 0.78rem;
+      color: #86EFAC;
       margin-bottom: 14px;
       display: none;
     }
 
     .student-note {
-      background: var(--gold-pale);
-      border: 1px solid var(--gold-border);
-      border-radius: 8px;
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-rule);
+      border-radius: var(--r-sm);
       padding: 10px 13px;
-      font-size: 0.78rem;
-      color: var(--navy);
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.6);
       line-height: 1.6;
       margin-bottom: 18px;
     }
 
-    .student-note strong { color: var(--gold); }
+    .student-note strong { color: var(--gold); font-weight: 500; }
 
-    /* ── FEATURES SECTION ── */
-    .section {
-      position: relative;
-      z-index: 1;
-      padding: 100px 80px;
+    #studentToggleText {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--dim);
+      margin-top: 14px;
+      cursor: pointer;
     }
 
-    .section-label {
+    #studentToggleText a { color: var(--gold); }
+
+    /* ─── TICKER ─── */
+    .ticker-wrap {
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      padding: 14px 0;
+      overflow: hidden;
+      background: var(--ink-2);
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 0;
+      animation: ticker 28s linear infinite;
+      white-space: nowrap;
+    }
+
+    .ticker-item {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
+      gap: 12px;
+      padding: 0 32px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .ticker-item svg { width: 14px; height: 14px; stroke: var(--gold); flex-shrink: 0; }
+
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ─── STATS STRIP ─── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .stat-cell {
+      padding: 56px 40px;
+      border-right: 1px solid var(--rule);
+      position: relative;
+    }
+
+    .stat-cell:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'Instrument Serif', serif;
+      font-size: 3.2rem;
+      font-weight: 400;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .stat-num em { color: var(--gold); font-style: normal; }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--dim);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    /* ─── SECTION BASE ─── */
+    .section {
+      padding: 120px 80px;
+      position: relative;
+    }
+
+    .section-eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--gold);
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .section-label::before {
+    .section-eyebrow::before {
       content: '';
-      width: 20px; height: 1.5px;
+      width: 24px; height: 1px;
       background: var(--gold);
-      border-radius: 2px;
     }
 
-    .section-heading {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2rem, 3.5vw, 3rem);
-      font-weight: 700;
-      color: var(--navy);
-      line-height: 1.1;
+    .section-h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+      font-weight: 400;
+      color: var(--white);
+      line-height: 1.05;
       letter-spacing: -0.02em;
-      max-width: 560px;
+      max-width: 600px;
       margin-bottom: 16px;
     }
 
-    .section-heading em { font-style: italic; color: var(--gold); }
+    .section-h2 em { font-style: italic; color: var(--gold); }
 
-    .section-sub {
-      font-size: 1rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-      max-width: 520px;
-      margin-bottom: 60px;
+    .section-p {
+      font-size: 0.95rem;
+      color: var(--dim);
+      line-height: 1.8;
+      max-width: 500px;
+      font-weight: 300;
     }
 
-    /* Features grid */
-    .features-bg {
-      background: var(--white);
+    /* ─── FEATURES ─── */
+    .features-section {
+      background: var(--ink);
+      border-top: 1px solid var(--rule);
+    }
+
+    .features-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: end;
+      margin-bottom: 80px;
     }
 
     .features-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-lg);
       overflow: hidden;
     }
 
-    .feature-cell {
+    .feat {
       padding: 36px 32px;
-      background: var(--white);
-      border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      transition: background 0.25s ease;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      transition: background 0.3s;
       position: relative;
       overflow: hidden;
     }
 
-    .feature-cell:hover { background: var(--off-white); }
-    .feature-cell:nth-child(3n) { border-right: none; }
-    .feature-cell:nth-last-child(-n+3) { border-bottom: none; }
+    .feat::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-rule), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
 
-    .feature-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      background: rgba(11,30,61,0.06);
+    .feat:hover { background: rgba(255,255,255,0.02); }
+    .feat:hover::before { opacity: 1; }
+    .feat:nth-child(3n) { border-right: none; }
+    .feat:nth-last-child(-n+3) { border-bottom: none; }
+
+    .feat-num {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 20px;
+      opacity: 0.6;
+    }
+
+    .feat-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.03);
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 18px;
-      color: var(--navy);
-      transition: background 0.25s;
+      margin-bottom: 20px;
+      transition: all 0.3s;
     }
 
-    .feature-icon svg { width: 20px; height: 20px; }
+    .feat-icon svg { width: 18px; height: 18px; stroke: var(--dim-2); transition: stroke 0.3s; }
 
-    .feature-cell:hover .feature-icon {
-      background: var(--gold-pale);
-      color: var(--gold);
+    .feat:hover .feat-icon {
+      border-color: var(--gold-rule);
+      background: var(--gold-dim);
     }
 
-    .feature-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 8px;
+    .feat:hover .feat-icon svg { stroke: var(--gold); }
+
+    .feat-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 10px;
       letter-spacing: -0.01em;
     }
 
-    .feature-desc {
-      font-size: 0.87rem;
-      color: var(--text-muted);
-      line-height: 1.65;
+    .feat-desc {
+      font-size: 0.82rem;
+      color: var(--dim);
+      line-height: 1.7;
+      font-weight: 300;
     }
 
-    /* ── HOW IT WORKS ── */
+    /* ─── HOW IT WORKS ─── */
     .how-section {
-      background: var(--navy);
-      overflow: hidden;
+      background: var(--ink-2);
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
     }
 
-    .how-section .section-label { color: var(--gold); }
-    .how-section .section-heading { color: var(--white); max-width: 100%; }
-    .how-section .section-sub { color: rgba(255,255,255,0.55); max-width: 100%; }
-
-    .steps-grid {
+    .how-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 0;
+      margin-top: 72px;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .step {
+      padding: 40px 32px;
+      border-right: 1px solid var(--rule);
       position: relative;
     }
 
-    .steps-grid::before {
-      content: '';
+    .step:last-child { border-right: none; }
+
+    .step-arrow {
       position: absolute;
-      top: 40px;
-      left: calc(12.5% + 20px);
-      right: calc(12.5% + 20px);
-      height: 1px;
-      background: rgba(255,255,255,0.1);
-      pointer-events: none;
-    }
-
-    .step-item {
-      padding: 0 24px;
-      text-align: center;
-      position: relative;
-    }
-
-    .step-num {
-      width: 56px; height: 56px;
+      top: 50%;
+      right: -1px;
+      transform: translateY(-50%);
+      width: 28px; height: 28px;
       border-radius: 50%;
-      background: rgba(196,154,12,0.15);
-      border: 1px solid rgba(196,154,12,0.3);
+      border: 1px solid var(--rule);
+      background: var(--ink-3);
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.4rem;
-      font-weight: 700;
+      z-index: 2;
+    }
+
+    .step-arrow svg { width: 12px; height: 12px; stroke: var(--dim); }
+    .step:last-child .step-arrow { display: none; }
+
+    .step-n {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
       color: var(--gold);
-      margin: 0 auto 24px;
-      position: relative;
-      z-index: 1;
+      letter-spacing: 0.1em;
+      margin-bottom: 24px;
+      opacity: 0.8;
     }
 
     .step-title {
-      font-family: 'Syne', sans-serif;
       font-size: 0.95rem;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
     }
 
     .step-desc {
-      font-size: 0.84rem;
-      color: rgba(255,255,255,0.5);
-      line-height: 1.6;
+      font-size: 0.82rem;
+      color: var(--dim);
+      line-height: 1.7;
+      font-weight: 300;
     }
 
-    /* ── SOCIAL PROOF ── */
+    /* ─── TESTIMONIALS ─── */
     .proof-section {
-      background: var(--off-white);
+      background: var(--ink);
+      border-top: 1px solid var(--rule);
     }
 
     .proof-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      gap: 1px;
+      background: var(--rule);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      margin-top: 72px;
     }
 
     .proof-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 32px 28px;
-      position: relative;
+      background: var(--ink-2);
+      padding: 36px 32px;
+      transition: background 0.3s;
     }
 
-    .proof-card::before {
-      content: '"';
-      position: absolute;
-      top: 20px;
-      right: 24px;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 5rem;
-      line-height: 1;
-      color: var(--gold);
-      opacity: 0.15;
-      pointer-events: none;
-    }
+    .proof-card:hover { background: var(--ink-3); }
 
     .proof-stars {
       display: flex;
-      gap: 3px;
-      margin-bottom: 16px;
+      gap: 2px;
+      margin-bottom: 20px;
     }
 
-    .proof-stars span {
-      width: 14px; height: 14px;
+    .proof-stars span { color: var(--gold); font-size: 12px; }
+
+    .proof-q {
+      font-family: 'Geist Mono', monospace;
+      font-size: 2rem;
       color: var(--gold);
-      font-size: 14px;
+      opacity: 0.2;
+      line-height: 1;
+      margin-bottom: 12px;
     }
 
     .proof-text {
-      font-size: 0.92rem;
-      color: var(--text-body);
-      line-height: 1.7;
-      margin-bottom: 24px;
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.75;
+      margin-bottom: 28px;
+      font-weight: 300;
       font-style: italic;
     }
 
@@ -881,236 +952,210 @@
       gap: 12px;
     }
 
-    .proof-avatar {
-      width: 40px; height: 40px;
+    .proof-av {
+      width: 38px; height: 38px;
       border-radius: 50%;
-      background: var(--navy);
+      background: var(--ink-3);
+      border: 1px solid rgba(255,255,255,0.07);
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 700;
+      font-size: 0.7rem;
+      font-weight: 600;
       color: var(--gold);
       flex-shrink: 0;
     }
 
     .proof-name {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--navy);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--white);
     }
 
     .proof-role {
-      font-size: 0.78rem;
-      color: var(--text-muted);
+      font-size: 0.73rem;
+      color: var(--dim);
+      font-weight: 300;
     }
 
-    /* ── STATS ── */
-    .stats-bar {
-      background: var(--cream);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 48px 80px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0;
-    }
-
-    .stat-item {
-      text-align: center;
-      border-right: 1px solid var(--border);
-      padding: 0 20px;
-    }
-
-    .stat-item:last-child { border-right: none; }
-
-    .stat-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2.8rem;
-      font-weight: 700;
-      color: var(--navy);
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .stat-num span { color: var(--gold); }
-
-    .stat-label {
-      font-size: 0.84rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    /* ── PRICING ── */
+    /* ─── PRICING ─── */
     .pricing-section {
-      background: var(--white);
+      background: var(--ink-2);
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
     }
+
+    .pricing-header { text-align: center; margin-bottom: 72px; }
+    .pricing-header .section-h2 { margin: 0 auto 16px; }
+    .pricing-header .section-p { margin: 0 auto; }
+    .pricing-header .section-eyebrow { justify-content: center; }
+    .pricing-header .section-eyebrow::before { display: none; }
 
     .pricing-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      max-width: 760px;
+      gap: 20px;
+      max-width: 780px;
       margin: 0 auto;
     }
 
-    .pricing-card {
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 36px 32px;
+    .price-card {
+      border: 1px solid var(--rule);
+      border-radius: var(--r-lg);
+      padding: 40px 36px;
       position: relative;
-      background: var(--white);
-      transition: all 0.25s ease;
+      background: var(--ink-3);
+      transition: all 0.3s;
     }
 
-    .pricing-card:hover {
-      box-shadow: 0 12px 40px rgba(11,30,61,0.08);
-      transform: translateY(-2px);
+    .price-card:hover {
+      border-color: rgba(255,255,255,0.1);
+      transform: translateY(-4px);
     }
 
-    .pricing-card.featured {
-      border-color: var(--navy);
-      background: var(--navy);
+    .price-card.featured {
+      border-color: var(--gold-rule);
+      background: var(--ink);
     }
 
-    .pricing-featured-badge {
+    .price-card.featured:hover { border-color: rgba(212,168,67,0.4); }
+
+    .price-badge {
       position: absolute;
-      top: -14px;
+      top: -13px;
       left: 50%;
       transform: translateX(-50%);
       background: var(--gold);
-      color: var(--navy);
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 5px 16px;
-      border-radius: 100px;
-      white-space: nowrap;
-    }
-
-    .pricing-plan {
-      font-family: 'Syne', sans-serif;
-      font-size: 0.8rem;
+      color: var(--ink);
+      font-size: 0.67rem;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .price-plan {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--gold);
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
-    .pricing-price {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2.6rem;
-      font-weight: 700;
+    .price-amount {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2.8rem;
+      font-weight: 400;
+      color: var(--white);
       line-height: 1;
-      color: var(--navy);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      letter-spacing: -0.03em;
     }
 
-    .pricing-card.featured .pricing-price { color: var(--white); }
-
-    .pricing-price-sub {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 24px;
+    .price-sub {
+      font-size: 0.77rem;
+      color: var(--dim);
+      margin-bottom: 28px;
+      font-weight: 300;
     }
 
-    .pricing-card.featured .pricing-price-sub { color: rgba(255,255,255,0.5); }
-
-    .pricing-divider {
+    .price-rule {
       height: 1px;
-      background: var(--border);
-      margin-bottom: 24px;
-    }
-
-    .pricing-card.featured .pricing-divider { background: rgba(255,255,255,0.1); }
-
-    .pricing-features {
-      list-style: none;
+      background: var(--rule);
       margin-bottom: 28px;
     }
 
-    .pricing-features li {
+    .price-features {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+
+    .price-features li {
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      font-size: 0.87rem;
-      color: var(--text-body);
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.55);
       margin-bottom: 12px;
-      line-height: 1.4;
+      line-height: 1.5;
+      font-weight: 300;
     }
 
-    .pricing-card.featured .pricing-features li { color: rgba(255,255,255,0.75); }
-
-    .check-icon {
-      width: 18px; height: 18px;
+    .pf-check {
+      width: 16px; height: 16px;
       border-radius: 50%;
-      background: rgba(21,128,61,0.12);
+      background: rgba(34,197,94,0.1);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       margin-top: 1px;
     }
 
-    .check-icon svg { width: 10px; height: 10px; stroke: #15803D; }
-    .pricing-card.featured .check-icon { background: rgba(196,154,12,0.2); }
-    .pricing-card.featured .check-icon svg { stroke: var(--gold); }
+    .pf-check svg { width: 9px; height: 9px; stroke: #4ADE80; }
+    .price-card.featured .pf-check { background: var(--gold-dim); }
+    .price-card.featured .pf-check svg { stroke: var(--gold); }
 
-    .btn-pricing {
+    .btn-price {
       width: 100%;
-      padding: 13px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      font-family: 'DM Sans', sans-serif;
+      padding: 12px;
+      border-radius: var(--r-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'Geist', sans-serif;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
     }
 
-    .btn-pricing-outline {
+    .btn-price-ghost {
       background: transparent;
-      color: var(--navy);
-      border: 1.5px solid rgba(11,30,61,0.2);
+      color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
-    .btn-pricing-outline:hover {
-      border-color: var(--navy);
-      background: rgba(11,30,61,0.04);
+    .btn-price-ghost:hover {
+      border-color: rgba(255,255,255,0.2);
+      color: var(--white);
     }
 
-    .btn-pricing-gold {
+    .btn-price-gold {
       background: var(--gold);
-      color: var(--navy);
+      color: var(--ink);
       border: none;
-      box-shadow: 0 4px 16px rgba(196,154,12,0.3);
     }
 
-    .btn-pricing-gold:hover {
-      background: var(--gold-light);
+    .btn-price-gold:hover {
+      background: var(--gold-2);
       transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(212,168,67,0.2);
     }
 
-    /* ── CTA SECTION ── */
+    /* ─── CTA ─── */
     .cta-section {
-      background: var(--navy);
-      padding: 120px 80px;
+      background: var(--ink);
+      padding: 160px 80px;
       text-align: center;
       position: relative;
       overflow: hidden;
+      border-top: 1px solid var(--rule);
     }
 
     .cta-section::before {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 800px; height: 800px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(196,154,12,0.08) 0%, transparent 70%);
+      width: 1000px; height: 600px;
+      background: radial-gradient(ellipse at center, rgba(212,168,67,0.07) 0%, transparent 65%);
       pointer-events: none;
     }
 
-    .cta-section .section-heading { color: var(--white); max-width: 700px; margin: 0 auto 16px; }
-    .cta-section .section-sub { color: rgba(255,255,255,0.55); margin: 0 auto 44px; }
+    .cta-section .section-h2 { margin: 0 auto 20px; max-width: 700px; }
+    .cta-section .section-p { margin: 0 auto 56px; }
+    .cta-section .section-eyebrow { justify-content: center; }
+    .cta-section .section-eyebrow::before { display: none; }
 
     .cta-actions {
       display: flex;
@@ -1120,91 +1165,42 @@
       flex-wrap: wrap;
     }
 
-    .btn-cta-gold {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 15px 34px;
-      background: var(--gold);
-      color: var(--navy);
-      border: none;
-      border-radius: 100px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.25s ease;
-      box-shadow: 0 6px 24px rgba(196,154,12,0.3);
-    }
-
-    .btn-cta-gold:hover {
-      background: var(--gold-light);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 32px rgba(196,154,12,0.4);
-    }
-
-    .btn-cta-ghost {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 15px 28px;
-      background: transparent;
-      color: rgba(255,255,255,0.7);
-      border: 1.5px solid rgba(255,255,255,0.2);
-      border-radius: 100px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-
-    .btn-cta-ghost:hover {
-      color: var(--white);
-      border-color: rgba(255,255,255,0.4);
-    }
-
-    /* ── FOOTER ── */
+    /* ─── FOOTER ─── */
     footer {
-      background: var(--navy-mid);
+      background: var(--ink-2);
+      border-top: 1px solid var(--rule);
       padding: 48px 80px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-top: 1px solid rgba(255,255,255,0.06);
     }
-
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .footer-logo-mark {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      background: rgba(196,154,12,0.15);
-      border: 1px solid rgba(196,154,12,0.25);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .footer-logo-mark img { width: 18px; height: 18px; object-fit: contain; opacity: 0.8; }
 
     .footer-brand {
-      font-family: 'Syne', sans-serif;
-      font-size: 1rem;
-      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-icon {
+      width: 28px; height: 28px;
+      border: 1px solid var(--gold-rule);
+      border-radius: 7px;
+      background: var(--gold-dim);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .footer-icon svg { width: 13px; height: 13px; stroke: var(--gold); }
+
+    .footer-name {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.1rem;
       color: var(--white);
-      letter-spacing: -0.01em;
     }
 
     .footer-copy {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.35);
-      line-height: 1.5;
+      font-size: 0.75rem;
+      color: var(--dim);
+      font-weight: 300;
     }
 
     .footer-links {
@@ -1213,16 +1209,17 @@
     }
 
     .footer-links a {
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.4);
+      font-size: 0.78rem;
+      color: var(--dim);
       text-decoration: none;
+      font-weight: 300;
       transition: color 0.2s;
     }
 
-    .footer-links a:hover { color: rgba(255,255,255,0.75); }
+    .footer-links a:hover { color: rgba(255,255,255,0.6); }
 
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp {
+    /* ─── ANIMATIONS ─── */
+    @keyframes riseIn {
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
     }
@@ -1230,7 +1227,7 @@
     .reveal {
       opacity: 0;
       transform: translateY(24px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      transition: opacity 0.7s ease, transform 0.7s ease;
     }
 
     .reveal.visible {
@@ -1238,552 +1235,419 @@
       transform: translateY(0);
     }
 
-    /* ── MOBILE NAV ── */
-    .nav-mobile-toggle {
-      display: none;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--navy);
-      padding: 4px;
-    }
-
-    /* ── RESPONSIVE ── */
+    /* ─── RESPONSIVE ─── */
     @media (max-width: 1100px) {
-      .hero { grid-template-columns: 1fr; min-height: auto; }
-      .hero-left { padding: 60px 40px 40px; text-align: center; align-items: center; }
-      .hero-right { padding: 0 40px 80px; }
-      .hero-sub { max-width: 100%; }
+      nav { padding: 0 24px; }
+      .nav-center { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-left { padding: 80px 40px 40px; align-items: center; text-align: center; }
+      .hero-p { max-width: 100%; }
       .hero-actions { justify-content: center; }
-      .hero-trust { justify-content: center; }
+      .hero-social { justify-content: center; }
+      .hero-right { padding: 0 40px 80px; }
+      .features-header { grid-template-columns: 1fr; gap: 24px; }
       .features-grid { grid-template-columns: repeat(2, 1fr); }
-      .feature-cell:nth-child(2n) { border-right: none; }
-      .feature-cell:nth-child(3n) { border-right: 1px solid var(--border); }
-      .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 40px; }
-      .steps-grid::before { display: none; }
-      .proof-grid { grid-template-columns: 1fr 1fr; }
+      .feat:nth-child(2n) { border-right: none; }
+      .feat:nth-child(3n) { border-right: 1px solid var(--rule); }
+      .how-grid { grid-template-columns: repeat(2, 1fr); }
+      .step:nth-child(2) { border-right: none; }
+      .step:nth-child(2) .step-arrow { display: none; }
+      .proof-grid { grid-template-columns: 1fr; }
+      .stats-strip { grid-template-columns: repeat(2, 1fr); }
+      .stat-cell:nth-child(2) { border-right: none; }
       .section { padding: 80px 40px; }
-      .stats-bar { padding: 48px 40px; }
-      .cta-section { padding: 80px 40px; }
+      .cta-section { padding: 100px 40px; }
       footer { padding: 40px; }
-      .nav-links { display: none; }
-      .nav-mobile-toggle { display: block; }
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 680px) {
       nav { padding: 0 20px; }
-      .hero-left { padding: 40px 20px 32px; }
+      .hero-left { padding: 60px 20px 32px; }
       .hero-right { padding: 0 20px 60px; }
       .section { padding: 60px 20px; }
       .features-grid { grid-template-columns: 1fr; }
-      .feature-cell:nth-child(n) { border-right: none; }
-      .steps-grid { grid-template-columns: 1fr; }
-      .proof-grid { grid-template-columns: 1fr; }
+      .feat:nth-child(n) { border-right: none; }
+      .how-grid { grid-template-columns: 1fr; }
+      .step { border-right: none; }
+      .step-arrow { display: none !important; }
+      .stats-strip { grid-template-columns: repeat(2, 1fr); }
       .pricing-grid { grid-template-columns: 1fr; }
-      .stats-bar { grid-template-columns: repeat(2, 1fr); padding: 40px 20px; gap: 24px; }
-      .stat-item { border-right: none; }
-      .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
-      .cta-section { padding: 60px 20px; }
+      .cta-section { padding: 80px 20px; }
       footer { flex-direction: column; gap: 24px; padding: 32px 20px; text-align: center; }
       .footer-links { flex-wrap: wrap; justify-content: center; }
-      .auth-card-body { padding: 22px 22px 28px; }
-      .auth-card-header { padding: 22px 22px 16px; }
+      .auth-body { padding: 22px 20px 26px; }
+      .auth-top { padding: 20px 20px 16px; }
     }
-
-    /* student login toggle */
-    #studentToggleText {
-      text-align: center;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      margin-top: 14px;
-      cursor: pointer;
-    }
-
-    #studentToggleText a { color: var(--gold); }
   </style>
 </head>
 <body>
 
-<!-- ── NAVIGATION ──────────────────────────────────────── -->
+<!-- NAV -->
 <nav id="mainNav">
   <a href="#" class="nav-logo">
-    <div class="nav-logo-mark">
-      <img src="./assets/images/VELUNE.jpg" alt="Velune" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-family:serif;color:#C49A0C;font-weight:700;font-size:1rem\'>V</span>'"/>
-    </div>
-    <span class="nav-logo-name">Velune</span>
-  </a>
-  <ul class="nav-links">
+  <img src="./assets/images/VELUNE.jpg" alt="Velune" style="height:32px;width:auto;object-fit:contain;border-radius:8px;"/>
+  <span class="nav-brand">Velune</span>
+</a>
+  <ul class="nav-center">
     <li><a href="#features">Features</a></li>
     <li><a href="#how-it-works">How it works</a></li>
     <li><a href="#pricing">Pricing</a></li>
   </ul>
-  <div class="nav-cta">
-    <a class="btn-nav-ghost" onclick="scrollToAuth('signin')">Sign in</a>
-    <a class="btn-nav-primary" onclick="scrollToAuth('register')">Start free trial</a>
+  <div class="nav-right">
+    <a class="btn-ghost-sm" onclick="scrollToAuth('signin')">Sign in</a>
+    <a class="btn-gold-sm" onclick="scrollToAuth('register')">Start free trial</a>
   </div>
-  <button class="nav-mobile-toggle" onclick="scrollToAuth('register')" aria-label="Get started">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  </button>
 </nav>
 
-<!-- ── HERO ────────────────────────────────────────────── -->
+<!-- HERO -->
 <section class="hero" id="top">
-  <div class="hero-bg-shape"></div>
-  <div class="hero-bg-shape-2"></div>
-
-  <!-- Left: copy -->
   <div class="hero-left">
-    <div class="hero-badge">
-      <span class="hero-badge-dot"></span>
-      1-month free trial · No credit card required
+    <div class="eyebrow">
+      <span class="eyebrow-dot"></span>
+      30-day free trial &mdash; no card required
     </div>
-    <h1 class="hero-headline">
-      The smarter way to<br><em>manage payments</em><br>at your centre.
+    <h1 class="hero-h1">
+      The payment OS<br>for <em>tutorial centres</em><br>that means business.
     </h1>
-    <p class="hero-sub">
-      Velune is the all-in-one payment management system built for tutorial centres. Track fees, manage VIP access, send WhatsApp reminders — all from one clean dashboard.
+    <p class="hero-p">
+      Velune gives tutorial centre owners complete control over fees, VIP access, and student records — from a single, beautiful dashboard.
     </p>
     <div class="hero-actions">
-      <a class="btn-primary-lg" onclick="scrollToAuth('register')">
+      <a class="btn-primary-xl" onclick="scrollToAuth('register')">
         Get started free
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
         </svg>
       </a>
-      <a class="btn-secondary-lg" href="#how-it-works">
-        See how it works
-      </a>
+      <a class="btn-line-xl" href="#how-it-works">See how it works</a>
     </div>
-    <div class="hero-trust">
-      <div class="trust-avatars">
-        <div class="trust-avatar">EA</div>
-        <div class="trust-avatar">BK</div>
-        <div class="trust-avatar">OF</div>
-        <div class="trust-avatar">MM</div>
+    <div class="hero-social">
+      <div class="social-faces">
+        <div class="social-face">EA</div>
+        <div class="social-face">BK</div>
+        <div class="social-face">OF</div>
+        <div class="social-face">MM</div>
       </div>
-      <p class="trust-text">
-        <strong>Trusted by 200+ tutorial centres</strong><br>across Nigeria. Start your free trial today.
-      </p>
+      <p class="social-text"><strong>200+ tutorial centres</strong><br>across Nigeria trust Velune.</p>
     </div>
   </div>
 
-  <!-- Right: auth card -->
   <div class="hero-right">
     <div class="auth-card" id="authCard">
-
-      <div class="auth-card-header">
-        <div class="auth-tabs-row">
+      <div class="auth-top">
+        <div class="auth-tabs">
           <button class="auth-tab active" id="tabAdminBtn" onclick="switchMainTab('admin')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Admin Login
           </button>
           <button class="auth-tab" id="tabStudentBtn" onclick="switchMainTab('student')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
             Student Login
           </button>
         </div>
       </div>
 
-      <!-- ── ADMIN PANEL ── -->
-      <div class="auth-card-body" id="panel-admin">
-        <div class="sub-tabs">
-          <button class="sub-tab active" id="stSignin" onclick="switchAuthTab('signin')">Sign in</button>
-          <button class="sub-tab" id="stRegister" onclick="switchAuthTab('register')">Create account</button>
-          <button class="sub-tab" id="stForgot" onclick="switchAuthTab('forgot')" style="display:none">Reset</button>
+      <!-- ADMIN PANEL -->
+      <div class="auth-body" id="panel-admin">
+        <div class="auth-subtabs">
+          <button class="auth-stab active" id="stSignin" onclick="switchAuthTab('signin')">Sign in</button>
+          <button class="auth-stab" id="stRegister" onclick="switchAuthTab('register')">Create account</button>
+          <button class="auth-stab" id="stForgot" onclick="switchAuthTab('forgot')" style="display:none">Reset</button>
         </div>
 
-        <!-- Sign In -->
         <div class="auth-panel active" id="panel-signin">
-          <div class="form-title">Welcome back</div>
-          <div class="form-sub">Access your centre's dashboard.</div>
+          <div class="auth-title">Welcome back</div>
+          <div class="auth-sub">Access your centre's dashboard.</div>
           <div class="auth-err" id="signinError"></div>
+          <div class="field"><label>Email address</label><input type="email" id="signinEmail" placeholder="you@centre.com" autocomplete="email"/></div>
           <div class="field">
-            <label>Email address</label>
-            <input type="email" id="signinEmail" placeholder="you@centre.com" autocomplete="email"/>
-          </div>
-          <div class="field">
-            <div class="field-row">
-              <label>Password</label>
-              <a class="link-small" onclick="switchAuthTab('forgot')">Forgot?</a>
-            </div>
+            <div class="field-row"><label>Password</label><a class="link-xs" onclick="switchAuthTab('forgot')">Forgot?</a></div>
             <input type="password" id="signinPassword" placeholder="••••••••" autocomplete="current-password"/>
           </div>
           <button class="btn-submit" id="signinBtn" onclick="handleSignIn()">Sign in to dashboard</button>
-          <button class="btn-ghost-full" onclick="switchAuthTab('register')">No account? Create one free →</button>
+          <button class="btn-outline-full" onclick="switchAuthTab('register')">No account? Create one free →</button>
         </div>
 
-        <!-- Register -->
         <div class="auth-panel" id="panel-register">
-          <div class="form-title">Start for free</div>
-          <div class="form-sub">1-month free trial. No card needed.</div>
+          <div class="auth-title">Start for free</div>
+          <div class="auth-sub">30-day trial. No card needed.</div>
           <div class="auth-err" id="registerError"></div>
-          <div class="auth-success" id="registerSuccess"></div>
-          <div class="field">
-            <label>Centre name</label>
-            <input type="text" id="regCentreName" placeholder="e.g. Excel Tutors, 360 Academy"/>
-          </div>
-          <div class="field">
-            <label>Email address</label>
-            <input type="email" id="regEmail" placeholder="you@centre.com" autocomplete="email"/>
-          </div>
-          <div class="field">
-            <label>Password</label>
-            <input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password"/>
-          </div>
+          <div class="auth-ok" id="registerSuccess"></div>
+          <div class="field"><label>Centre name</label><input type="text" id="regCentreName" placeholder="e.g. Excel Tutors, 360 Academy"/></div>
+          <div class="field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@centre.com" autocomplete="email"/></div>
+          <div class="field"><label>Password</label><input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password"/></div>
           <div class="field">
             <label>Payment mode</label>
             <div class="mode-grid">
-              <div class="mode-option selected" id="modeRecurring" onclick="selectMode('recurring')">
-                <div class="mode-option-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23 4 23 10 17 10"/>
-                    <polyline points="1 20 1 14 7 14"/>
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                  </svg>
-                </div>
-                <div class="mode-option-title">Recurring</div>
-                <div class="mode-option-desc">Monthly cycles with VIP timers</div>
+              <div class="mode-opt active" id="modeRecurring" onclick="selectMode('recurring')">
+                <div class="mode-opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
+                <div class="mode-opt-title">Recurring</div>
+                <div class="mode-opt-desc">Monthly cycles with VIP timers</div>
               </div>
-              <div class="mode-option" id="modeOneTime" onclick="selectMode('one_time')">
-                <div class="mode-option-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
-                </div>
-                <div class="mode-option-title">One-Time</div>
-                <div class="mode-option-desc">Single payment, no timers</div>
+              <div class="mode-opt" id="modeOneTime" onclick="selectMode('one_time')">
+                <div class="mode-opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <div class="mode-opt-title">One-Time</div>
+                <div class="mode-opt-desc">Single payment, no timers</div>
               </div>
             </div>
             <input type="hidden" id="selectedMode" value="recurring"/>
           </div>
           <button class="btn-submit" id="registerBtn" onclick="handleRegister()">Create free account</button>
-          <button class="btn-ghost-full" onclick="switchAuthTab('signin')">Already have an account? Sign in →</button>
+          <button class="btn-outline-full" onclick="switchAuthTab('signin')">Already have an account? Sign in →</button>
         </div>
 
-        <!-- Forgot Password -->
         <div class="auth-panel" id="panel-forgot">
-          <div class="form-title">Reset password</div>
-          <div class="form-sub">We'll send a reset link to your email.</div>
+          <div class="auth-title">Reset password</div>
+          <div class="auth-sub">We'll send a reset link to your email.</div>
           <div class="auth-err" id="forgotError"></div>
-          <div class="auth-success" id="forgotSuccess"></div>
-          <div class="field">
-            <label>Email address</label>
-            <input type="email" id="forgotEmail" placeholder="you@centre.com"/>
-          </div>
+          <div class="auth-ok" id="forgotSuccess"></div>
+          <div class="field"><label>Email address</label><input type="email" id="forgotEmail" placeholder="you@centre.com"/></div>
           <button class="btn-submit" id="forgotBtn" onclick="handleForgotPassword()">Send reset link</button>
-          <button class="btn-ghost-full" onclick="switchAuthTab('signin')">← Back to sign in</button>
+          <button class="btn-outline-full" onclick="switchAuthTab('signin')">← Back to sign in</button>
         </div>
       </div>
 
-      <!-- ── STUDENT PANEL ── -->
-      <div class="auth-card-body auth-panel" id="panel-student">
-        <div class="form-title">Student Login</div>
-        <div class="form-sub">View your fees, payment history and access status.</div>
-
-        <!-- Recurring: Login ID -->
+      <!-- STUDENT PANEL -->
+      <div class="auth-body auth-panel" id="panel-student">
+        <div class="auth-title">Student Login</div>
+        <div class="auth-sub">View your fees, payments and access status.</div>
         <div id="studentRecurringPanel">
-          <div class="student-note">
-            Your <strong>Login ID</strong> (e.g. STU-AB12CD) was given to you when you enrolled. Ask your admin if you've lost it.
-          </div>
+          <div class="student-note">Your <strong>Login ID</strong> (e.g. STU-AB12CD) was given when you enrolled. Ask your admin if you've lost it.</div>
           <div class="auth-err" id="studentRecurringError"></div>
-          <div class="field">
-            <label>Your Login ID</label>
-            <input type="text" id="studentLoginId" placeholder="STU-XXXXXX" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-weight:700;font-size:1rem;text-align:center"/>
-          </div>
+          <div class="field"><label>Your Login ID</label><input type="text" id="studentLoginId" placeholder="STU-XXXXXX" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.1em;font-weight:600;font-size:1rem;text-align:center"/></div>
           <button class="btn-submit" id="studentRecurringBtn" onclick="handleStudentLoginById()">View my dashboard</button>
         </div>
-
-        <!-- One-time: Name + PIN -->
         <div id="studentOneTimePanel" style="display:none">
-          <div class="student-note">
-            Enter your <strong>Full Name</strong> and the <strong>4-digit PIN</strong> your admin gave you.
-          </div>
+          <div class="student-note">Enter your <strong>Full Name</strong> and the <strong>4-digit PIN</strong> your admin gave you.</div>
           <div class="auth-err" id="studentOneTimeError"></div>
-          <div class="field">
-            <label>Full Name</label>
-            <input type="text" id="studentName" placeholder="Enter your full name"/>
-          </div>
-          <div class="field">
-            <label>4-Digit PIN</label>
-            <input type="password" id="studentPin" placeholder="••••" maxlength="4" style="text-align:center;letter-spacing:0.4em;font-size:1.2rem;font-weight:700"/>
-          </div>
+          <div class="field"><label>Full Name</label><input type="text" id="studentName" placeholder="Enter your full name"/></div>
+          <div class="field"><label>4-Digit PIN</label><input type="password" id="studentPin" placeholder="••••" maxlength="4" style="text-align:center;letter-spacing:0.4em;font-size:1.2rem;font-weight:600"/></div>
           <button class="btn-submit" id="studentOneTimeBtn" onclick="handleStudentLoginByPin()">View my record</button>
         </div>
-
-        <div id="studentToggleText">
-          Using PIN to log in? <a onclick="toggleStudentPanel()">Switch to PIN login</a>
-        </div>
+        <div id="studentToggleText">Using PIN to log in? <a onclick="toggleStudentPanel()">Switch to PIN login</a></div>
       </div>
-
     </div>
   </div>
 </section>
 
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <!-- duplicated for infinite loop -->
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VIP Access Management</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Monthly Cycle Timers</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.95 12.4"/></svg>WhatsApp Reminders</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Live Alerts</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>CSV Export</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Student Portals</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VIP Access Management</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Monthly Cycle Timers</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.95 12.4"/></svg>WhatsApp Reminders</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Live Alerts</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>CSV Export</span>
+    <span class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Student Portals</span>
+  </div>
+</div>
 
+<!-- STATS -->
+<div class="stats-strip reveal">
+  <div class="stat-cell">
+    <div class="stat-num">200<em>+</em></div>
+    <div class="stat-label">Tutorial centres<br>across Nigeria</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-num">₦0</div>
+    <div class="stat-label">To start — full features<br>for 30 days free</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-num">10<em>m</em></div>
+    <div class="stat-label">Average setup time<br>from sign-up to live</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-num">1<em>×</em></div>
+    <div class="stat-label">Click to send a<br>WhatsApp reminder</div>
+  </div>
+</div>
 
-<!-- ── FEATURES ──────────────────────────────────────── -->
-<section class="section features-bg" id="features">
-  <div class="section-label reveal">Everything you need</div>
-  <h2 class="section-heading reveal">Built for how tutorial<br>centres <em>actually</em> work.</h2>
-  <p class="section-sub reveal">Every feature in Velune was designed around real problems faced by Nigerian tutorial centre owners — not generic software repurposed for education.</p>
-
+<!-- FEATURES -->
+<section class="section features-section" id="features">
+  <div class="features-header">
+    <div>
+      <div class="section-eyebrow reveal">Everything you need</div>
+      <h2 class="section-h2 reveal">Built for how tutorial centres <em>actually</em> work.</h2>
+    </div>
+    <div>
+      <p class="section-p reveal">Every feature in Velune was designed around real problems faced by Nigerian tutorial centre owners — not generic software repurposed for education.</p>
+    </div>
+  </div>
   <div class="features-grid reveal">
-
-    <div class="feature-cell">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-        </svg>
-      </div>
-      <div class="feature-title">Student Dashboard Portal</div>
-      <div class="feature-desc">Each student gets their own login to check fee status, payment history, VIP status and access countdown — without bothering the admin.</div>
+    <div class="feat">
+      <div class="feat-num">01</div>
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="feat-title">Student Portal</div>
+      <div class="feat-desc">Each student gets their own login to check fee status, payment history, VIP status and access countdown — without bothering the admin.</div>
     </div>
-
-    <div class="feature-cell">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <polyline points="9 12 11 14 15 10"/>
-        </svg>
-      </div>
-      <div class="feature-title">VIP Access Management</div>
-      <div class="feature-desc">Students who complete payment are automatically granted VIP access with a serial number. Grant or remove temporary access anytime.</div>
+    <div class="feat">
+      <div class="feat-num">02</div>
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+      <div class="feat-title">VIP Access Control</div>
+      <div class="feat-desc">Students who pay in full are automatically granted VIP access with a serial number. Grant or remove temporary access at any time.</div>
     </div>
-
-    <div class="feature-cell">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-      </div>
-      <div class="feature-title">Monthly Cycle Countdowns</div>
-      <div class="feature-desc">Track exactly how many days remain in each student's subscription cycle. Visual timers turn amber and red as expiry approaches.</div>
+    <div class="feat">
+      <div class="feat-num">03</div>
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="feat-title">Cycle Countdowns</div>
+      <div class="feat-desc">Track exactly how many days remain in each student's subscription cycle. Visual timers turn amber and red as expiry approaches.</div>
     </div>
-
-    <div class="feature-cell">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.95 12.4a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.86 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-        </svg>
-      </div>
-      <div class="feature-title">WhatsApp Payment Reminders</div>
-      <div class="feature-desc">Send personalised payment reminders directly via WhatsApp with one click — pre-filled with the student's name, balance, and due date.</div>
+    <div class="feat">
+      <div class="feat-num">04</div>
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.95 12.4a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.86 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+      <div class="feat-title">WhatsApp Reminders</div>
+      <div class="feat-desc">Send personalised payment reminders via WhatsApp with one click — pre-filled with the student's name, balance, and due date.</div>
     </div>
-
-    <div class="feature-cell">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-      </div>
-      <div class="feature-title">Live Alerts & Urgent Flags</div>
-      <div class="feature-desc">The alerts panel surfaces students whose VIP cycles expire within 5 days, colour-coded by urgency. Never miss a renewal again.</div>
+    <div class="feat">
+      <div class="feat-num">05</div>
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="feat-title">Live Alert System</div>
+      <div class="feat-desc">The alerts panel surfaces students whose VIP cycles expire within 5 days, colour-coded by urgency. Never miss a renewal again.</div>
     </div>
-
-    <div class="feature-cell">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-        </svg>
-      </div>
-      <div class="feature-title">CSV Export & Records</div>
-      <div class="feature-desc">Export your complete student roster or payment history to CSV at any time. Full audit trail with void support for correcting errors.</div>
+    <div class="feat">
+      <div class="feat-num">06</div>
+      <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="feat-title">CSV Export & Audit Trail</div>
+      <div class="feat-desc">Export your complete student roster or payment history to CSV at any time. Full audit trail with void support for correcting errors.</div>
     </div>
-
   </div>
 </section>
 
-<!-- ── HOW IT WORKS ──────────────────────────────────── -->
+<!-- HOW IT WORKS -->
 <section class="section how-section" id="how-it-works">
-  <div class="section-label reveal">Simple by design</div>
-  <h2 class="section-heading reveal" style="margin-bottom:14px">From sign-up to running<br><em>in under 10 minutes.</em></h2>
-  <p class="section-sub reveal" style="margin-bottom:72px">No training required. No technical knowledge needed. Velune is designed for centre owners, not IT departments.</p>
-
-  <div class="steps-grid reveal">
-    <div class="step-item">
-      <div class="step-num">1</div>
+  <div class="section-eyebrow reveal">Simple by design</div>
+  <h2 class="section-h2 reveal">From sign-up to running<br><em>in under 10 minutes.</em></h2>
+  <div class="how-grid reveal">
+    <div class="step">
+      <div class="step-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="step-n">STEP 01</div>
       <div class="step-title">Create your account</div>
       <div class="step-desc">Sign up in seconds with your centre name and email. Choose recurring monthly billing or one-time payment mode.</div>
     </div>
-    <div class="step-item">
-      <div class="step-num">2</div>
+    <div class="step">
+      <div class="step-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="step-n">STEP 02</div>
       <div class="step-title">Add your students</div>
       <div class="step-desc">Enter each student's name, class and fee. The system automatically generates login credentials and tracks their balance.</div>
     </div>
-    <div class="step-item">
-      <div class="step-num">3</div>
+    <div class="step">
+      <div class="step-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="step-n">STEP 03</div>
       <div class="step-title">Record payments</div>
-      <div class="step-desc">Log payments as they come in. Students who pay in full are automatically promoted to VIP with a serial number.</div>
+      <div class="step-desc">Log payments as they come in. Students who pay in full are automatically promoted to VIP with a unique serial number.</div>
     </div>
-    <div class="step-item">
-      <div class="step-num">4</div>
+    <div class="step">
+      <div class="step-n">STEP 04</div>
       <div class="step-title">Stay in control</div>
       <div class="step-desc">Monitor who's paid, who's owing, and who's about to expire — all from your dashboard. Send reminders with one tap.</div>
     </div>
   </div>
 </section>
 
-<!-- ── TESTIMONIALS ──────────────────────────────────── -->
+<!-- TESTIMONIALS -->
 <section class="section proof-section">
-  <div class="section-label reveal">Real results</div>
-  <h2 class="section-heading reveal">What centre owners<br><em>are saying.</em></h2>
-  <p class="section-sub reveal" style="margin-bottom:48px">From small home-based tutors to large coaching academies — Velune works for centres of every size.</p>
-
+  <div class="section-eyebrow reveal">Real results</div>
+  <h2 class="section-h2 reveal">What centre owners<br><em>are saying.</em></h2>
   <div class="proof-grid reveal">
     <div class="proof-card">
-      <div class="proof-stars">
-        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-      </div>
-      <p class="proof-text">"Before Velune, I was tracking fees in a notebook. Now I know exactly who has paid, who owes, and who needs a reminder — all on my phone."</p>
+      <div class="proof-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+      <div class="proof-q">"</div>
+      <p class="proof-text">Before Velune, I was tracking fees in a notebook. Now I know exactly who has paid, who owes, and who needs a reminder — all on my phone.</p>
       <div class="proof-author">
-        <div class="proof-avatar">AO</div>
-        <div>
-          <div class="proof-name">Adunola Okonkwo</div>
-          <div class="proof-role">Founder, Bright Minds Academy · Lagos</div>
-        </div>
+        <div class="proof-av">AO</div>
+        <div><div class="proof-name">Adunola Okonkwo</div><div class="proof-role">Bright Minds Academy · Lagos</div></div>
       </div>
     </div>
-
     <div class="proof-card">
-      <div class="proof-stars">
-        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-      </div>
-      <p class="proof-text">What used to take an hour now takes seconds. The reminder feature is a game changer</p>
+      <div class="proof-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+      <div class="proof-q">"</div>
+      <p class="proof-text">What used to take an hour now takes seconds. The WhatsApp reminder feature alone is worth it — parents respond immediately.</p>
       <div class="proof-author">
-        <div class="proof-avatar">BM</div>
-        <div>
-          <div class="proof-name">Babatunde Morakinyo</div>
-          <div class="proof-role">Director, StepUp Tutors · Abuja</div>
-        </div>
+        <div class="proof-av">BM</div>
+        <div><div class="proof-name">Babatunde Morakinyo</div><div class="proof-role">StepUp Tutors · Abuja</div></div>
       </div>
     </div>
-
     <div class="proof-card">
-      <div class="proof-stars">
-        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-      </div>
-      <p class="proof-text">"My students love that they can check their own payment status without asking me. The VIP system makes them take their fees more seriously."</p>
+      <div class="proof-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+      <div class="proof-q">"</div>
+      <p class="proof-text">My students love checking their own payment status. The VIP system makes them take their fees more seriously — collection has improved.</p>
       <div class="proof-author">
-        <div class="proof-avatar">CF</div>
-        <div>
-          <div class="proof-name">Chidinma Festus</div>
-          <div class="proof-role">Owner, Excel Tutorial Centre · Port Harcourt</div>
-        </div>
+        <div class="proof-av">CF</div>
+        <div><div class="proof-name">Chidinma Festus</div><div class="proof-role">Excel Tutorial Centre · Port Harcourt</div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── PRICING ───────────────────────────────────────── -->
+<!-- PRICING -->
 <section class="section pricing-section" id="pricing">
-  <div style="text-align:center">
-    <div class="section-label reveal" style="justify-content:center">Simple pricing</div>
-    <h2 class="section-heading reveal" style="margin:0 auto 14px;text-align:center">Fair, transparent pricing.<br><em>No surprises.</em></h2>
-    <p class="section-sub reveal" style="margin:0 auto 60px;text-align:center">Start with a full free trial. Upgrade when you're ready — or not at all.</p>
+  <div class="pricing-header">
+    <div class="section-eyebrow reveal">Simple pricing</div>
+    <h2 class="section-h2 reveal">Fair, transparent pricing.<br><em>No surprises.</em></h2>
+    <p class="section-p reveal">Start with a full free trial. Upgrade when you're ready.</p>
   </div>
-
   <div class="pricing-grid reveal">
-
-    <div class="pricing-card">
-      <div class="pricing-plan">Free Trial</div>
-      <div class="pricing-price">₦0</div>
-      <div class="pricing-price-sub">30 days, full access, no card needed</div>
-      <div class="pricing-divider"></div>
-      <ul class="pricing-features">
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          Unlimited students
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          Full payment tracking & history
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          VIP access management
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          Student portal login
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          WhatsApp reminders
-        </li>
+    <div class="price-card">
+      <div class="price-plan">Free Trial</div>
+      <div class="price-amount">₦0</div>
+      <div class="price-sub">30 days, full access, no card needed</div>
+      <div class="price-rule"></div>
+      <ul class="price-features">
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>Unlimited students</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>Full payment tracking & history</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>VIP access management</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>Student portal login</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>WhatsApp reminders</li>
       </ul>
-      <button class="btn-pricing btn-pricing-outline" onclick="scrollToAuth('register')">Start free trial</button>
+      <button class="btn-price btn-price-ghost" onclick="scrollToAuth('register')">Start free trial</button>
     </div>
-
-    <div class="pricing-card featured">
-      <div class="pricing-featured-badge">Most Popular</div>
-      <div class="pricing-plan">Licensed Access</div>
-      <div class="pricing-price" style="color:white">Contact us</div>
-      <div class="pricing-price-sub">Activation code · Monthly or term-based</div>
-      <div class="pricing-divider"></div>
-      <ul class="pricing-features">
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          Everything in free trial
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          Activation code for continued access
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          Priority support via WhatsApp
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          CSV exports unlocked
-        </li>
-        <li>
-          <span class="check-icon"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>
-          Regular feature updates
-        </li>
+    <div class="price-card featured">
+      <div class="price-badge">Most Popular</div>
+      <div class="price-plan">Licensed Access</div>
+      <div class="price-amount">Contact us</div>
+      <div class="price-sub">Activation code · Monthly or term-based</div>
+      <div class="price-rule"></div>
+      <ul class="price-features">
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>Everything in free trial</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>Activation code for continued access</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>Priority support via WhatsApp</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>CSV exports unlocked</li>
+        <li><span class="pf-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span>Regular feature updates</li>
       </ul>
-      <button class="btn-pricing btn-pricing-gold" onclick="scrollToAuth('register')">Get started free</button>
+      <button class="btn-price btn-price-gold" onclick="scrollToAuth('register')">Get started free</button>
     </div>
-
   </div>
 </section>
 
-<!-- ── CTA ───────────────────────────────────────────── -->
+<!-- CTA -->
 <section class="cta-section">
-  <div class="section-label reveal" style="justify-content:center;color:var(--gold)">Get started today</div>
-  <h2 class="section-heading reveal">Stop chasing payments.<br><em>Start running your centre.</em></h2>
-  <p class="section-sub reveal">Join hundreds of tutorial centres who've already taken control of their payment management. It takes less than 5 minutes to set up.</p>
+  <div class="section-eyebrow reveal">Get started today</div>
+  <h2 class="section-h2 reveal">Stop chasing payments.<br><em>Start running your centre.</em></h2>
+  <p class="section-p reveal">Join hundreds of tutorial centres who've taken control of their payment management. Takes less than 5 minutes to set up.</p>
   <div class="cta-actions reveal">
-    <a class="btn-cta-gold" onclick="scrollToAuth('register')">
+    <a class="btn-primary-xl" onclick="scrollToAuth('register')">
       Start free — no card needed
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-      </svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>
-    <a class="btn-cta-ghost" onclick="scrollToAuth('signin')">Already have an account? Sign in</a>
+    <a class="btn-line-xl" onclick="scrollToAuth('signin')">Already have an account?</a>
   </div>
 </section>
 
-<!-- ── FOOTER ────────────────────────────────────────── -->
+<!-- FOOTER -->
 <footer>
-  <div class="footer-left">
-    <div class="footer-logo-mark">
-      <img src="./assets/images/VELUNE.jpg" alt="Velune" onerror="this.style.display='none'"/>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="footer-brand">
+      <div class="footer-icon"><img src="./assets/images/VELUNE.jpg" alt="Velune" style="width:16px;height:16px;object-fit:contain;border-radius:4px;"/>
+      
     </div>
-    <div>
-      <div class="footer-brand">Velune</div>
-      <div class="footer-copy">© 2025 Velune. All rights reserved.</div>
-    </div>
+    <div class="footer-copy">© 2025 Velune. All rights reserved.</div>
   </div>
   <div class="footer-links">
     <a href="#features">Features</a>
@@ -1793,10 +1657,9 @@
   </div>
 </footer>
 
-<!-- ── SCRIPTS ───────────────────────────────────────── -->
+<!-- SCRIPTS -->
 <script src="./supabase.js"></script>
 <script>
-// ── Existing session check ──────────────────────────
 (async function() {
   try {
     const { data: { session } } = await _supabase.auth.getSession();
@@ -1809,38 +1672,34 @@ async function loadLiveStats() {
   try {
     const { count } = await _supabase.from('profiles').select('*', { count: 'exact', head: true });
     if (count > 0) {
-      document.querySelectorAll('.trust-text strong').forEach(el => {
-        el.textContent = `Trusted by ${count}+ tutorial centres`;
+      document.querySelectorAll('.social-text strong').forEach(el => {
+        el.textContent = `${count}+ tutorial centres`;
       });
     }
   } catch(e) {}
 }
 
-// ── Nav scroll effect ───────────────────────────────
 window.addEventListener('scroll', () => {
   document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 20);
 });
 
-// ── Reveal on scroll ────────────────────────────────
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach((entry, i) => {
-    if (entry.isIntersecting) {
-      setTimeout(() => entry.target.classList.add('visible'), i * 80);
-      revealObserver.unobserve(entry.target);
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 90);
+      obs.unobserve(e.target);
     }
   });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-// ── Scroll to auth ──────────────────────────────────
 function scrollToAuth(tab) {
   document.getElementById('authCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
   if (tab === 'signin')   { switchMainTab('admin'); switchAuthTab('signin'); }
   if (tab === 'register') { switchMainTab('admin'); switchAuthTab('register'); }
 }
 
-// ── Tab switching ───────────────────────────────────
 let activeMainTab = 'admin';
 let selectedMode  = 'recurring';
 
@@ -1857,15 +1716,15 @@ function switchAuthTab(tab) {
     document.getElementById('panel-' + t)?.classList.toggle('active', t === tab);
     document.getElementById('st' + t.charAt(0).toUpperCase() + t.slice(1))?.classList.toggle('active', t === tab);
   });
-  const forgotTab = document.getElementById('stForgot');
-  if (forgotTab) forgotTab.style.display = tab === 'forgot' ? '' : 'none';
+  const ft = document.getElementById('stForgot');
+  if (ft) ft.style.display = tab === 'forgot' ? '' : 'none';
 }
 
 function selectMode(mode) {
   selectedMode = mode;
   document.getElementById('selectedMode').value = mode;
-  document.getElementById('modeRecurring').classList.toggle('selected', mode === 'recurring');
-  document.getElementById('modeOneTime').classList.toggle('selected', mode === 'one_time');
+  document.getElementById('modeRecurring').classList.toggle('active', mode === 'recurring');
+  document.getElementById('modeOneTime').classList.toggle('active', mode === 'one_time');
 }
 
 function toggleStudentPanel() {
@@ -1880,24 +1739,17 @@ function toggleStudentPanel() {
     : 'Using PIN to log in? <a onclick="toggleStudentPanel()">Switch to PIN login</a>';
 }
 
-// ── Sign In ─────────────────────────────────────────
 async function handleSignIn() {
-  const email    = document.getElementById('signinEmail').value.trim();
+  const email = document.getElementById('signinEmail').value.trim();
   const password = document.getElementById('signinPassword').value;
-  const errEl    = document.getElementById('signinError');
-  const btn      = document.getElementById('signinBtn');
-
+  const errEl = document.getElementById('signinError');
+  const btn = document.getElementById('signinBtn');
   errEl.style.display = 'none';
-  if (!email || !password) {
-    errEl.textContent = 'Please enter your email and password.';
-    errEl.style.display = 'block'; return;
-  }
+  if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
   btn.textContent = 'Signing in…'; btn.disabled = true;
   const { error } = await _supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    errEl.textContent = error.message === 'Invalid login credentials'
-      ? 'Incorrect email or password. Please try again.'
-      : error.message;
+    errEl.textContent = error.message === 'Invalid login credentials' ? 'Incorrect email or password.' : error.message;
     errEl.style.display = 'block';
     btn.textContent = 'Sign in to dashboard'; btn.disabled = false;
   } else {
@@ -1906,115 +1758,79 @@ async function handleSignIn() {
   }
 }
 
-// ── Register ────────────────────────────────────────
 async function handleRegister() {
   const centreName = document.getElementById('regCentreName').value.trim();
-  const email      = document.getElementById('regEmail').value.trim();
-  const password   = document.getElementById('regPassword').value;
-  const mode       = document.getElementById('selectedMode').value;
-  const errEl      = document.getElementById('registerError');
-  const successEl  = document.getElementById('registerSuccess');
-  const btn        = document.getElementById('registerBtn');
-
-  errEl.style.display = successEl.style.display = 'none';
-  if (!centreName) { errEl.textContent = 'Please enter your centre name.'; errEl.style.display='block'; return; }
-  if (!email)      { errEl.textContent = 'Please enter your email.'; errEl.style.display='block'; return; }
-  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display='block'; return; }
-
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const mode = document.getElementById('selectedMode').value;
+  const errEl = document.getElementById('registerError');
+  const sucEl = document.getElementById('registerSuccess');
+  const btn = document.getElementById('registerBtn');
+  errEl.style.display = sucEl.style.display = 'none';
+  if (!centreName) { errEl.textContent = 'Please enter your centre name.'; errEl.style.display = 'block'; return; }
+  if (!email) { errEl.textContent = 'Please enter your email.'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
   btn.textContent = 'Creating account…'; btn.disabled = true;
-  const { data, error } = await _supabase.auth.signUp({
-    email, password,
-    options: { data: { centre_name: centreName, mode } }
-  });
-
-  if (error) {
-    errEl.textContent = error.message; errEl.style.display = 'block';
-    btn.textContent = 'Create free account'; btn.disabled = false; return;
-  }
-
-  if (data.user) {
-    await _supabase.from('profiles').upsert({ id: data.user.id, centre_name: centreName, mode });
-  }
-
-  if (data.session) {
-    window.location.href = './admin.html';
-  } else {
-    successEl.innerHTML = `✓ Account created! Check your email (<strong>${email}</strong>) for a confirmation link, then sign in.`;
-    successEl.style.display = 'block';
+  const { data, error } = await _supabase.auth.signUp({ email, password, options: { data: { centre_name: centreName, mode } } });
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; btn.textContent = 'Create free account'; btn.disabled = false; return; }
+  if (data.user) { await _supabase.from('profiles').upsert({ id: data.user.id, centre_name: centreName, mode }); }
+  if (data.session) { window.location.href = './admin.html'; }
+  else {
+    sucEl.innerHTML = `✓ Account created! Check your email (<strong>${email}</strong>) for a confirmation link, then sign in.`;
+    sucEl.style.display = 'block';
     btn.textContent = 'Create free account'; btn.disabled = false;
     setTimeout(() => switchAuthTab('signin'), 4000);
   }
 }
 
-// ── Forgot Password ──────────────────────────────────
 async function handleForgotPassword() {
-  const email    = document.getElementById('forgotEmail').value.trim();
-  const errEl    = document.getElementById('forgotError');
-  const successEl= document.getElementById('forgotSuccess');
-  const btn      = document.getElementById('forgotBtn');
-
-  errEl.style.display = successEl.style.display = 'none';
-  if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display='block'; return; }
+  const email = document.getElementById('forgotEmail').value.trim();
+  const errEl = document.getElementById('forgotError');
+  const sucEl = document.getElementById('forgotSuccess');
+  const btn = document.getElementById('forgotBtn');
+  errEl.style.display = sucEl.style.display = 'none';
+  if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display = 'block'; return; }
   btn.textContent = 'Sending…'; btn.disabled = true;
-  const { error } = await _supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/index.html'
-  });
-  if (error) {
-    errEl.textContent = error.message; errEl.style.display = 'block';
-  } else {
-    successEl.innerHTML = `✓ Reset link sent to <strong>${email}</strong>. Check your inbox.`;
-    successEl.style.display = 'block';
-  }
+  const { error } = await _supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/index.html' });
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
+  else { sucEl.innerHTML = `✓ Reset link sent to <strong>${email}</strong>. Check your inbox.`; sucEl.style.display = 'block'; }
   btn.textContent = 'Send reset link'; btn.disabled = false;
 }
 
-// ── Student Login — Login ID ─────────────────────────
 async function handleStudentLoginById() {
   const loginId = document.getElementById('studentLoginId').value.trim().toUpperCase();
-  const errEl   = document.getElementById('studentRecurringError');
-  const btn     = document.getElementById('studentRecurringBtn');
-
+  const errEl = document.getElementById('studentRecurringError');
+  const btn = document.getElementById('studentRecurringBtn');
   errEl.style.display = 'none';
-  if (!loginId) { errEl.textContent = 'Please enter your Login ID.'; errEl.style.display='block'; return; }
+  if (!loginId) { errEl.textContent = 'Please enter your Login ID.'; errEl.style.display = 'block'; return; }
   btn.textContent = 'Looking up…'; btn.disabled = true;
-  const { data: students, error } = await _supabase
-    .from('students').select('id, name, owner_id').eq('login_id', loginId).limit(1);
+  const { data: students, error } = await _supabase.from('students').select('id, name, owner_id').eq('login_id', loginId).limit(1);
   btn.textContent = 'View my dashboard'; btn.disabled = false;
-  if (error || !students?.length) {
-    errEl.textContent = 'No student found with that Login ID. Contact your admin.';
-    errEl.style.display = 'block'; return;
-  }
+  if (error || !students?.length) { errEl.textContent = 'No student found with that Login ID.'; errEl.style.display = 'block'; return; }
   localStorage.setItem('zt_role', 'student');
   localStorage.setItem('zt_student_id', students[0].id);
   localStorage.setItem('zt_owner_id', students[0].owner_id);
   window.location.href = './student.html';
 }
 
-// ── Student Login — PIN ──────────────────────────────
 async function handleStudentLoginByPin() {
   const name = document.getElementById('studentName').value.trim();
-  const pin  = document.getElementById('studentPin').value.trim();
-  const errEl= document.getElementById('studentOneTimeError');
-  const btn  = document.getElementById('studentOneTimeBtn');
-
+  const pin = document.getElementById('studentPin').value.trim();
+  const errEl = document.getElementById('studentOneTimeError');
+  const btn = document.getElementById('studentOneTimeBtn');
   errEl.style.display = 'none';
-  if (!name || !pin) { errEl.textContent = 'Please enter your name and PIN.'; errEl.style.display='block'; return; }
-  if (pin.length !== 4 || isNaN(pin)) { errEl.textContent = 'PIN must be exactly 4 digits.'; errEl.style.display='block'; return; }
+  if (!name || !pin) { errEl.textContent = 'Please enter your name and PIN.'; errEl.style.display = 'block'; return; }
+  if (pin.length !== 4 || isNaN(pin)) { errEl.textContent = 'PIN must be exactly 4 digits.'; errEl.style.display = 'block'; return; }
   btn.textContent = 'Looking up…'; btn.disabled = true;
-  const { data: students, error } = await _supabase
-    .from('students').select('id, name, owner_id').ilike('name', name).eq('student_pin', pin).limit(1);
+  const { data: students, error } = await _supabase.from('students').select('id, name, owner_id').ilike('name', name).eq('student_pin', pin).limit(1);
   btn.textContent = 'View my record'; btn.disabled = false;
-  if (error || !students?.length) {
-    errEl.textContent = 'No record found. Check your name and PIN and try again.';
-    errEl.style.display = 'block'; return;
-  }
+  if (error || !students?.length) { errEl.textContent = 'No record found. Check your name and PIN.'; errEl.style.display = 'block'; return; }
   localStorage.setItem('zt_role', 'student');
   localStorage.setItem('zt_student_id', students[0].id);
   localStorage.setItem('zt_owner_id', students[0].owner_id);
   window.location.href = './student.html';
 }
 
-// ── Enter key support ────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   if (activeMainTab === 'student') {
@@ -2029,38 +1845,32 @@ document.addEventListener('keydown', e => {
   if (active.id === 'panel-forgot')   handleForgotPassword();
 });
 
-// ── Password reset redirect ──────────────────────────
 (async function checkPasswordReset() {
   if (window.location.hash.includes('type=recovery')) {
     switchAuthTab('forgot');
     document.getElementById('panel-forgot').innerHTML = `
-      <div class="form-title">Set new password</div>
-      <div class="form-sub">Enter and confirm your new password below.</div>
+      <div class="auth-title">Set new password</div>
+      <div class="auth-sub">Enter and confirm your new password below.</div>
       <div class="auth-err" id="resetPwError"></div>
-      <div class="auth-success" id="resetPwSuccess"></div>
+      <div class="auth-ok" id="resetPwSuccess"></div>
       <div class="field"><label>New Password</label><input type="password" id="newPw1" placeholder="New password (min 6 chars)"/></div>
       <div class="field"><label>Confirm Password</label><input type="password" id="newPw2" placeholder="Confirm password"/></div>
-      <button class="btn-submit" onclick="submitNewPassword()">Update Password</button>
-    `;
+      <button class="btn-submit" onclick="submitNewPassword()">Update Password</button>`;
     scrollToAuth('signin');
   }
 })();
 
 async function submitNewPassword() {
-  const pw1   = document.getElementById('newPw1').value;
-  const pw2   = document.getElementById('newPw2').value;
+  const pw1 = document.getElementById('newPw1').value;
+  const pw2 = document.getElementById('newPw2').value;
   const errEl = document.getElementById('resetPwError');
   const sucEl = document.getElementById('resetPwSuccess');
   errEl.style.display = sucEl.style.display = 'none';
-  if (pw1.length < 6) { errEl.textContent='Password must be at least 6 characters.'; errEl.style.display='block'; return; }
-  if (pw1 !== pw2)    { errEl.textContent='Passwords do not match.'; errEl.style.display='block'; return; }
+  if (pw1.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+  if (pw1 !== pw2) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
   const { error } = await _supabase.auth.updateUser({ password: pw1 });
   if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
-  else {
-    sucEl.textContent = '✓ Password updated! Redirecting to dashboard…';
-    sucEl.style.display = 'block';
-    setTimeout(() => window.location.href = './admin.html', 2000);
-  }
+  else { sucEl.textContent = '✓ Password updated! Redirecting…'; sucEl.style.display = 'block'; setTimeout(() => window.location.href = './admin.html', 2000); }
 }
 </script>
 </body>
