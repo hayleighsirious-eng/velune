@@ -1164,23 +1164,23 @@ function initCookieBanner() {
 document.addEventListener('DOMContentLoaded', initCookieBanner);
 
 function showAdminWelcome(adminName, stats) {
-  const sessionKey = 'velune_welcomed_admin';
   const onboardKey = 'velune_onboarding_done_' + currentUserId;
+  const sessionKey = 'velune_welcomed_admin';
 
-  // Show onboarding if no students yet AND not previously dismissed
-  const isFirstTime = stats.total === 0
-
-  if (isFirstTime) {
+  // First-timer: zero students AND never dismissed onboarding
+  if (stats.total === 0 && !localStorage.getItem(onboardKey)) {
     showOnboarding(adminName);
     return;
   }
 
-  // Regular returning-user welcome (existing logic)
+  // Returning user welcome (once per session)
   if (sessionStorage.getItem(sessionKey)) return;
   sessionStorage.setItem(sessionKey, '1');
+
   const hour     = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const firstName = (adminName || 'Admin').split(' ')[0];
+
   const overlay = document.createElement('div');
   overlay.className = 'welcome-modal-overlay';
   overlay.id = 'welcomeOverlay';
@@ -1201,13 +1201,8 @@ function showAdminWelcome(adminName, stats) {
 }
 
 
-
-
-
-
 function showOnboarding(adminName) {
   if (document.getElementById('onboardingOverlay')) return;
-  const firstName = (adminName || 'Admin').split(' ')[0];
   const centreSet = ownerProfile?.centre_name && ownerProfile.centre_name !== 'My Centre';
 
   const overlay = document.createElement('div');
@@ -1223,14 +1218,14 @@ function showOnboarding(adminName) {
           </svg>
           Velune
         </div>
-        <button class="onboarding-skip" onclick="dismissOnboarding(true)">Skip setup</button>
+        <button class="onboarding-skip" onclick="dismissOnboarding()">Skip setup</button>
       </div>
 
-      <!-- STEP 1 -->
+      <!-- STEP 1: Set up centre -->
       <div class="ob-phase" id="ob-phase-1">
         <div class="onboarding-welcome">
           <div class="onboarding-emoji">⚙️</div>
-          <h2>Step 1 of 3</h2>
+          <h2>Step 1 of 2</h2>
           <p>First, set up your centre name, default fee, and bank details.</p>
         </div>
         <div class="onboarding-steps">
@@ -1238,23 +1233,23 @@ function showOnboarding(adminName) {
             <div class="ob-step-num">1</div>
             <div class="ob-step-body">
               <div class="ob-step-title">Set up your centre</div>
-              <div class="ob-step-desc">Go to Settings, fill in your details, then hit <strong>Save Settings</strong>. Come back here when done.</div>
+              <div class="ob-step-desc">Fill in your centre name, WhatsApp number, bank details, then hit <strong>Save Settings</strong>.</div>
               <button class="ob-step-btn" onclick="onboardingGoToSettings()">Open Settings →</button>
             </div>
           </div>
         </div>
         <div class="onboarding-footer">
-          <div class="ob-progress"><span class="ob-dot ob-dot-active"></span><span class="ob-dot"></span><span class="ob-dot"></span></div>
-          <div class="onboarding-hint">Click "Open Settings", save your details, then this will update automatically.</div>
+          <div class="ob-progress"><span class="ob-dot ob-dot-active"></span><span class="ob-dot"></span></div>
+          <div class="onboarding-hint">After saving your details, come back here for Step 2.</div>
         </div>
       </div>
 
-      <!-- STEP 2 -->
+      <!-- STEP 2: Add first student -->
       <div class="ob-phase" id="ob-phase-2" style="display:none">
         <div class="onboarding-welcome">
           <div class="onboarding-emoji">🎉</div>
-          <h2>Step 2 of 3</h2>
-          <p>Great! Now add your first student to get started.</p>
+          <h2>Step 2 of 2</h2>
+          <p>Now add your first student to finish setup.</p>
         </div>
         <div class="onboarding-steps">
           <div class="onboarding-step">
@@ -1267,31 +1262,8 @@ function showOnboarding(adminName) {
           </div>
         </div>
         <div class="onboarding-footer">
-          <div class="ob-progress"><span class="ob-dot ob-dot-done"></span><span class="ob-dot ob-dot-active"></span><span class="ob-dot"></span></div>
-          <div class="onboarding-hint">After adding the student, come back here for the final step.</div>
-        </div>
-      </div>
-
-      <!-- STEP 3 -->
-      <div class="ob-phase" id="ob-phase-3" style="display:none">
-        <div class="onboarding-welcome">
-          <div class="onboarding-emoji">💳</div>
-          <h2>Step 3 of 3</h2>
-          <p>Almost there! Record your first payment to activate VIP for that student.</p>
-        </div>
-        <div class="onboarding-steps">
-          <div class="onboarding-step">
-            <div class="ob-step-num">3</div>
-            <div class="ob-step-body">
-              <div class="ob-step-title">Record their first payment</div>
-              <div class="ob-step-desc">Go to the <strong>Students</strong> tab, find the student, and click the <strong>Pay</strong> button next to their name.</div>
-              <button class="ob-step-btn" onclick="onboardingGoToStudents()">Go to Students →</button>
-            </div>
-          </div>
-        </div>
-        <div class="onboarding-footer">
-          <div class="ob-progress"><span class="ob-dot ob-dot-done"></span><span class="ob-dot ob-dot-done"></span><span class="ob-dot ob-dot-active"></span></div>
-          <div class="onboarding-hint">Once payment is recorded, setup is complete!</div>
+          <div class="ob-progress"><span class="ob-dot ob-dot-done"></span><span class="ob-dot ob-dot-active"></span></div>
+          <div class="onboarding-hint">Once the student is added, you're all done!</div>
         </div>
       </div>
 
@@ -1300,11 +1272,11 @@ function showOnboarding(adminName) {
         <div class="onboarding-welcome" style="padding-bottom:24px">
           <div class="onboarding-emoji">✅</div>
           <h2>You're all set!</h2>
-          <p>Your centre is live. Students are registered and payments are being tracked.</p>
+          <p>Your centre is live. Students can now be registered and payments tracked.</p>
         </div>
         <div class="onboarding-footer">
-          <div class="ob-progress"><span class="ob-dot ob-dot-done"></span><span class="ob-dot ob-dot-done"></span><span class="ob-dot ob-dot-done"></span></div>
-          <button class="onboarding-done-btn" onclick="dismissOnboarding(true)">Go to Dashboard →</button>
+          <div class="ob-progress"><span class="ob-dot ob-dot-done"></span><span class="ob-dot ob-dot-done"></span></div>
+          <button class="onboarding-done-btn" onclick="dismissOnboarding()">Go to Dashboard →</button>
         </div>
       </div>
 
@@ -1312,14 +1284,12 @@ function showOnboarding(adminName) {
 
   document.body.appendChild(overlay);
 
-  // Start on correct phase
-  if (centreSet) {
-    onboardingSetPhase(2);
-  }
+ 
 }
 
+
 function onboardingSetPhase(num) {
-  [1, 2, 3, 'done'].forEach(p => {
+  ['1', '2', 'done'].forEach(p => {
     const el = document.getElementById('ob-phase-' + p);
     if (el) el.style.display = 'none';
   });
@@ -1327,54 +1297,43 @@ function onboardingSetPhase(num) {
   if (target) target.style.display = '';
 }
 
-function onboardingGoToSettings() {
-  document.getElementById('onboardingOverlay').remove();
-  showSection('settings', document.querySelector('.nav-item.danger-nav'));
 
+function onboardingGoToSettings() {
+  // Close overlay and go to settings section
+  const overlay = document.getElementById('onboardingOverlay');
+  if (overlay) overlay.remove();
+  showSection('settings', document.querySelector('.nav-item[onclick*="settings"]'));
+
+  // After user saves settings, re-open onboarding at step 2
   const originalSave = window.saveSettings;
-  window.saveSettings = async function() {
-    await originalSave();
-    window.saveSettings = originalSave;
-    showToast('✓ Centre settings saved! Moving to next step…', 'success');
+  window.saveSettings = async function () {
+    await originalSave.apply(this, arguments);
+    window.saveSettings = originalSave; // restore immediately so it never fires twice
     showOnboarding(ownerProfile?.centre_name || 'Admin');
     onboardingSetPhase(2);
   };
 }
 
+
 function onboardingAddStudent() {
-  // Close overlay, open add student modal, watch for student being added
-  document.getElementById('onboardingOverlay').remove();
+  const overlay = document.getElementById('onboardingOverlay');
+  if (overlay) overlay.remove();
   openModal('addStudentModal');
 
   const originalAdd = window.addStudent;
-  window.addStudent = async function() {
-    await originalAdd();
-    window.addStudent = originalAdd; // restore original
-    // Only advance if a student was actually added
+  window.addStudent = async function () {
+    await originalAdd.apply(this, arguments);
+    window.addStudent = originalAdd; // restore immediately
+    // Only advance if student was actually added successfully
     if (allStudents.length > 0) {
       showOnboarding(ownerProfile?.centre_name || 'Admin');
-      onboardingSetPhase(3);
+      onboardingSetPhase('done');
     }
   };
 }
 
-function onboardingGoToStudents() {
-  dismissOnboarding(true);
-  showSection('students', document.querySelector('.nav-item[onclick*="students"]'));
-}
 
-function dismissOnboarding(permanent = false) {
-  if (permanent) {
-    localStorage.setItem('velune_onboarding_done_' + currentUserId, '1');
-  }
-  const el = document.getElementById('onboardingOverlay');
-  if (el) {
-    el.style.opacity = '0';
-    el.style.transition = 'opacity 0.25s ease';
-    setTimeout(() => el.remove(), 260);
-  }
-}
-
+// Single, correct definition of dismissOnboarding — saves to localStorage so it NEVER shows again
 function dismissOnboarding() {
   localStorage.setItem('velune_onboarding_done_' + currentUserId, '1');
   const el = document.getElementById('onboardingOverlay');
@@ -1385,6 +1344,7 @@ function dismissOnboarding() {
   }
 }
 
+
 function showAccessBanner(html, bgColor) {
   const banner = document.createElement('div');
   banner.style.cssText = `position:fixed;top:0;left:0;right:0;z-index:9999;background:${bgColor};color:white;text-align:center;padding:10px 20px;font-size:0.85rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;font-family:'DM Sans',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,0.2);`;
@@ -1392,9 +1352,6 @@ function showAccessBanner(html, bgColor) {
   document.body.style.paddingTop = '44px';
   document.body.insertBefore(banner, document.body.firstChild);
 }
-
-
-
 
 
 
