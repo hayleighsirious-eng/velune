@@ -8,7 +8,7 @@ let allStudents   = [];
 let allPayments   = [];
 let currentFilter = 'all';
 let searchTerm    = '';
-let ownerProfile  = null;   // { id, centre_name, mode, whatsapp, bank_name, account_number, account_name }
+let ownerProfile  = null;
 let currentUserId = null;
 
 // ── Boot ─────────────────────────────────────────────────────
@@ -18,16 +18,14 @@ let currentUserId = null;
 
   currentUserId = session.user.id;
 
-  // ── ACCESS CHECK ──────────────────────────────────────────
-  const access = checkAccess(currentUserId);
+  // ── ACCESS CHECK (now async — reads from Supabase) ────────
+  const access = await checkAccess(currentUserId);
 
   if (!access.allowed) {
-    // No trial, no valid license → go to activation page
     window.location.href = './activate.html';
     return;
   }
 
-  // Show trial warning banner if trial ends in 5 days or less
   if (access.reason === 'trial' && access.daysLeft <= 5) {
     showAccessBanner(
       `⚠️ Free trial ends in <strong>${access.daysLeft} day${access.daysLeft !== 1 ? 's' : ''}</strong>. ` +
@@ -36,7 +34,6 @@ let currentUserId = null;
     );
   }
 
-  // Show license expiry warning if license ends in 5 days or less
   if (access.reason === 'licensed' && access.daysLeft <= 5) {
     showAccessBanner(
       `⚠️ Your access expires in <strong>${access.daysLeft} day${access.daysLeft !== 1 ? 's' : ''}</strong>. ` +
@@ -44,7 +41,6 @@ let currentUserId = null;
       '#C0392B'
     );
   }
-  // ── END ACCESS CHECK ──────────────────────────────────────
 
   // Load profile
   const { data: profile } = await _supabase
@@ -57,7 +53,6 @@ let currentUserId = null;
     ownerProfile = profile;
   }
 
-  // Set UI
   const centreName = ownerProfile.centre_name || session.user.email;
   document.getElementById('adminNameDisplay').textContent  = centreName;
   document.getElementById('sidebarCentreName').textContent = centreName;
@@ -74,7 +69,7 @@ let currentUserId = null;
   document.getElementById('accountNumber').value = ownerProfile.account_number || '';
   document.getElementById('accountName').value   = ownerProfile.account_name || '';
   document.getElementById('modeDisplay').textContent = ownerProfile.mode === 'recurring'
-    ? '🔄 Recurring (Monthly Cycles)' : '✅ One-Time Payment';
+    ? 'Recurring (Monthly Cycles)' : 'One-Time Payment';
 
   await loadAll();
   if (ownerProfile.mode === 'recurring') await runAutoExpire();
@@ -111,12 +106,12 @@ async function loadAll() {
     renderVIPGrid();
     renderAlerts();
   } else {
-    // One-time: render VIP as "cleared" students only (no timer)
     renderVIPGridOneTime();
   }
 }
 
 // ── Auto-expire (recurring mode only) ────────────────────────
+// Removes VIP from ANY student whose cycle has ended — paid or owing
 async function runAutoExpire() {
   const now = new Date();
   const toExpire = allStudents.filter(s => {
@@ -126,7 +121,12 @@ async function runAutoExpire() {
   });
   for (const s of toExpire) {
     await _supabase.from('students').update({
-      vip_active: false, temp_vip: false, serial: null
+      vip_active: false,
+      temp_vip:   false,
+      is_vip:     false,
+      vip_type:   null
+      // NOTE: serial is NOT cleared here — it stays on the record
+      // It reactivates when the student completes payment for new month
     }).eq('id', s.id).eq('owner_id', currentUserId);
   }
   if (toExpire.length) await loadAll();
@@ -198,15 +198,14 @@ function renderStudentsTable() {
   }
 
   tbody.innerHTML = list.map(s => {
-    const cycle   = isRecurring ? calcCycle(s) : null;
-    let expText   = '—';
+    const cycle  = isRecurring ? calcCycle(s) : null;
+    let expText  = '—';
     if (isRecurring && s.cycle_start) {
       expText = (cycle.expired && !s.vip_active)
         ? '<span class="badge badge-red">Cycle Ended</span>'
         : fmtDate(cycle.due);
     }
 
-    // Login identifier column
     const loginInfo = ownerProfile.mode === 'recurring'
       ? `<small style="color:var(--text-muted)">${s.login_id || '—'}</small>`
       : `<small style="color:var(--text-muted)">PIN: ${s.student_pin || '—'}</small>`;
@@ -310,7 +309,7 @@ function renderVIPCards(list) {
     return `
       <div class="vip-card">
         <div class="vip-card-top">
-          <div class="vip-avatar">${s.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
+          <div class="vip-avatar">${s.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</div>
           <div class="vip-card-info">
             <div class="vip-card-name">${s.name}</div>
             <div class="vip-card-class">${s.class || 'No class'}</div>
@@ -333,52 +332,6 @@ function renderVIPCards(list) {
             ? `<button class="btn-xs btn-red" onclick="removeTempVIP('${s.id}')">Remove Temp VIP</button>`
             : `<button class="btn-xs btn-grey" onclick="grantTempVIP('${s.id}')">Grant Temp VIP</button>`
           }
-        </div>
-      </div>`;
-  }).join('')}</div>`;
-}
-function filterVIP() {
-  const q = document.getElementById('vipSearchInput')?.value?.toLowerCase() || '';
-  const list = allStudents.filter(s => {
-    if (!s.vip_active) return false;
-    if (!q) return true;
-    return s.serial?.toLowerCase().includes(q) || s.name?.toLowerCase().includes(q);
-  });
-  renderVIPCards(list);
-}
-
-function renderVIPCards(list) {
-  const container = document.getElementById('vipCardsContainer');
-  if (!container) return;
-  if (!list.length) {
-    container.innerHTML = '<div class="empty-state">No active VIP students found.</div>';
-    return;
-  }
-  container.innerHTML = `<div class="vip-cards-grid">${list.map(s => {
-    const cycle = calcCycle(s);
-    const pctClass = cycle.pct > 40 ? '' : cycle.pct > 15 ? 'warn' : 'danger';
-    return `
-      <div class="vip-card">
-        <div class="vip-card-top">
-          <div class="vip-avatar">${s.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
-          <div class="vip-card-info">
-            <div class="vip-card-name">${s.name}</div>
-            <div class="vip-card-class">${s.class || 'No class'}</div>
-            ${s.serial ? `<div class="vip-serial-badge">#${s.serial}</div>` : ''}
-            ${s.temp_vip ? '<span class="badge badge-orange" style="font-size:0.7rem;margin-top:4px">Temporary</span>' : ''}
-          </div>
-        </div>
-        <div class="vip-timer">
-          <div class="vip-days">${cycle.daysLeft} <span>days left</span></div>
-          <div class="timer-bar-wrap"><div class="timer-bar ${pctClass}" style="width:${cycle.pct}%"></div></div>
-          <div class="vip-dates">
-            <span>Started ${fmtDate(s.cycle_start)}</span>
-            <span>Expires ${fmtDate(cycle.due)}</span>
-          </div>
-        </div>
-        <div class="vip-card-actions">
-          <button class="btn-xs btn-blue" onclick="viewStudent('${s.id}')">View</button>
-          ${s.temp_vip ? `<button class="btn-xs btn-red" onclick="removeTempVIP('${s.id}')">Remove Temp VIP</button>` : ''}
         </div>
       </div>`;
   }).join('')}</div>`;
@@ -420,7 +373,7 @@ function renderVIPCardsOneTime(list) {
   container.innerHTML = `<div class="vip-cards-grid">${list.map(s => `
     <div class="vip-card">
       <div class="vip-card-top">
-        <div class="vip-avatar">${s.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
+        <div class="vip-avatar">${s.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</div>
         <div class="vip-card-info">
           <div class="vip-card-name">${s.name}</div>
           <div class="vip-card-class">${s.class || '—'}</div>
@@ -443,6 +396,7 @@ function renderVIPCardsOneTime(list) {
       </div>
     </div>`).join('')}</div>`;
 }
+
 // ── Alerts (recurring mode only) ─────────────────────────────
 function renderAlerts() {
   if (ownerProfile.mode !== 'recurring') return;
@@ -491,42 +445,41 @@ async function addStudent() {
   const notes    = document.getElementById('newNotes').value.trim();
   const errEl    = document.getElementById('addStudentError');
 
-  if (!name)        { showErr(errEl, 'Name is required.'); return; }
-  if (totalFee <= 0){ showErr(errEl, 'Total fee must be greater than 0.'); return; }
+  if (!name)         { showErr(errEl, 'Name is required.'); return; }
+  if (totalFee <= 0) { showErr(errEl, 'Total fee must be greater than 0.'); return; }
   errEl.style.display = 'none';
 
-  const balance  = Math.max(0, totalFee - amtPaid);
-  const fullPaid = balance <= 0;
-  const today    = new Date().toISOString().split('T')[0];
+  const balance     = Math.max(0, totalFee - amtPaid);
+  const fullPaid    = balance <= 0;
+  const today       = new Date().toISOString().split('T')[0];
   const isRecurring = ownerProfile.mode === 'recurring';
 
-  // Generate identifiers
   const login_id    = isRecurring ? ('STU-' + Math.random().toString(36).substr(2, 6).toUpperCase()) : null;
   const student_pin = isRecurring ? null : String(Math.floor(1000 + Math.random() * 9000));
   const serial      = fullPaid ? getNextSerial() : null;
 
   const studentObj = {
-    owner_id:      currentUserId,
+    owner_id:           currentUserId,
     name,
-    name_lower:    name.toLowerCase(),
-    class:         cls,
-    total_fee:     totalFee,
-    amount_paid:   amtPaid,
+    name_lower:         name.toLowerCase(),
+    class:              cls,
+    total_fee:          totalFee,
+    amount_paid:        amtPaid,
     balance,
-    email:         email || null,
+    email:              email || null,
     login_id,
     student_pin,
     serial,
-    status:        fullPaid ? 'paid' : 'partial',
-    vip_active:    fullPaid,
-    temp_vip:      false,
-    cycle_start:   isRecurring ? today : null,
-    month_number:  1,
-    notes:         notes || null,
-    paused:        false,
-    pause_reason:  null,
-    is_vip:        fullPaid,
-    vip_type:      fullPaid ? 'paid' : null,
+    status:             fullPaid ? 'paid' : 'partial',
+    vip_active:         fullPaid,
+    temp_vip:           false,
+    cycle_start:        isRecurring ? today : null,
+    month_number:       1,
+    notes:              notes || null,
+    paused:             false,
+    pause_reason:       null,
+    is_vip:             fullPaid,
+    vip_type:           fullPaid ? 'paid' : null,
     first_payment_date: today
   };
 
@@ -536,26 +489,21 @@ async function addStudent() {
 
   if (amtPaid > 0) {
     await _supabase.from('payments').insert([{
-      owner_id:      currentUserId,
-      student_id:    newStudent.id,
-      amount:        amtPaid,
+      owner_id:       currentUserId,
+      student_id:     newStudent.id,
+      amount:         amtPaid,
       method,
-      payment_date:  today,
+      payment_date:   today,
       serial_at_time: serial || null,
-      month_number:  1
+      month_number:   1
     }]);
   }
 
   closeModal('addStudentModal');
   resetAddForm();
 
-  // Show result with identifier
-  const identifier = isRecurring
-    ? `Login ID: ${login_id}`
-    : `PIN: ${student_pin}`;
+  const identifier = isRecurring ? `Login ID: ${login_id}` : `PIN: ${student_pin}`;
   showToast(`${name} added! ${identifier}${serial ? ' | Serial: #' + serial : ''}`, 'success');
-
-  // Show PIN/ID popup
   showCredentialsModal(name, isRecurring ? login_id : student_pin, isRecurring ? 'login_id' : 'pin');
   await loadAll();
 }
@@ -601,7 +549,7 @@ function showCredentialsModal(name, credential, type) {
 }
 
 function resetAddForm() {
-  ['newName','newClass','newTotalFee','newAmountPaid','newEmail','newNotes'].forEach(id => {
+  ['newName', 'newClass', 'newTotalFee', 'newAmountPaid', 'newEmail', 'newNotes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -616,10 +564,10 @@ function openRecordPayment(studentId) {
   document.getElementById('payAmount').value     = '';
   document.getElementById('payStudentInfo').innerHTML = `
     <div class="pay-student-info-box">
-      <strong>${s.name}</strong>
+      <strong>${s.name}</strong> — Month ${s.month_number || 1}
       <span>Balance: <b class="text-red">${formatNaira(s.balance)}</b></span>
       <span>${s.login_id ? 'Login ID: <b>' + s.login_id + '</b>' : 'PIN: <b>' + (s.student_pin || '—') + '</b>'}</span>
-      ${s.serial ? `<span>Serial: <b>#${s.serial}</b></span>` : ''}
+      ${s.serial ? `<span>Serial: <b>#${s.serial}</b> (will reactivate on full payment)</span>` : ''}
     </div>`;
   document.getElementById('recordPayError').style.display = 'none';
   openModal('recordPaymentModal');
@@ -637,24 +585,25 @@ async function recordPayment() {
   const s = allStudents.find(x => x.id === studentId);
   if (!s) return;
 
-  const newPaid    = (s.amount_paid || 0) + amount;
-  const newBalance = Math.max(0, (s.total_fee || 0) - newPaid);
-  const fullPaid   = newBalance <= 0;
   const isRecurring = ownerProfile.mode === 'recurring';
+  const newPaid     = (s.amount_paid || 0) + amount;
+  const newBalance  = Math.max(0, (s.total_fee || 0) - newPaid);
+  const fullPaid    = newBalance <= 0;
 
   let updates = { amount_paid: newPaid, balance: newBalance };
 
-  if (fullPaid && !s.serial) {
-    updates.serial     = getNextSerial();
+  if (fullPaid) {
+    // Use existing serial (reactivate it) or generate new one if somehow missing
+    const serial = s.serial || getNextSerial();
+    updates.serial     = serial;
     updates.vip_active = true;
     updates.is_vip     = true;
     updates.vip_type   = 'paid';
     updates.status     = 'paid';
+    updates.temp_vip   = false;
     if (isRecurring && !s.cycle_start) {
       updates.cycle_start = payDate || new Date().toISOString().split('T')[0];
     }
-  } else if (fullPaid && s.serial) {
-    updates.status = 'paid';
   } else {
     updates.status = 'partial';
   }
@@ -664,58 +613,100 @@ async function recordPayment() {
   if (error) { showErr(errEl, 'Error recording payment: ' + error.message); return; }
 
   await _supabase.from('payments').insert([{
-    owner_id:      currentUserId,
-    student_id:    studentId,
-    amount, method,
-    payment_date:  payDate,
-    serial_at_time: updates.serial || s.serial || null,
-    month_number:  s.month_number || 1
+    owner_id:       currentUserId,
+    student_id:     studentId,
+    amount,
+    method,
+    payment_date:   payDate,
+    serial_at_time: fullPaid ? (updates.serial || s.serial) : null,
+    month_number:   s.month_number || 1
   }]);
 
   closeModal('recordPaymentModal');
-  const msg = fullPaid && !s.serial
-    ? `Payment recorded! Serial #${updates.serial} assigned. VIP activated.`
+  const msg = fullPaid
+    ? `Payment complete! Serial #${updates.serial} reactivated. VIP access restored.`
     : 'Payment recorded successfully.';
   showToast(msg, 'success');
   await loadAll();
 }
 
-// ── Register New Month (recurring mode) ──────────────────────
+// ── Register New Month (recurring mode only) ──────────────────
+// RULES:
+// 1. Student must have balance = 0 (fully paid) to register new month
+// 2. Cycle starts from original due date — not today
+// 3. If due date is in the past (months overdue), start from today to avoid instant expiry
+// 4. Balance resets to full total_fee (owing again for new month)
+// 5. Serial is preserved — will reactivate once new month is fully paid
+// 6. VIP is OFF until new month payment is complete
 async function registerNewMonth(studentId) {
   const s = allStudents.find(x => x.id === studentId);
   if (!s) return;
+
+  // RULE 1: Block if still owing
+  if (s.balance > 0) {
+    showToast('Student must complete their current payment before registering a new month.', 'error');
+    return;
+  }
+
   const cycle    = calcCycle(s);
-  const newStart = cycle.due
-    ? new Date(cycle.due).toISOString().split('T')[0]
-    : new Date().toISOString().split('T')[0];
   const newMonth = (s.month_number || 1) + 1;
 
+  // RULE 3: Use due date as new start, but if it's too far in the past use today
+  // This prevents the new cycle from being instantly expired
+  const dueDate  = cycle.due ? new Date(cycle.due) : new Date();
+  const today    = new Date();
+  const newStart = dueDate > today
+    ? dueDate.toISOString().split('T')[0]   // due date is in future — use it
+    : today.toISOString().split('T')[0];    // due date already passed — start fresh today
+
   const { error } = await _supabase.from('students').update({
-    amount_paid:  0,
-    balance:      s.total_fee,
-    status:       'partial',
-    vip_active:   false,
+    amount_paid:  0,              // reset — owing again for new month
+    balance:      s.total_fee,   // full fee due again
+    status:       'partial',     // owing
+    vip_active:   false,         // VIP OFF until paid
     is_vip:       false,
-    serial:       null,
+    vip_type:     null,
+    temp_vip:     false,
+    // serial stays on the record — reactivates when fully paid
     cycle_start:  newStart,
-    month_number: newMonth
+    month_number: newMonth,
+    paused:       false,
+    pause_reason: null
   }).eq('id', s.id).eq('owner_id', currentUserId);
 
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
-  showToast(`Month ${newMonth} registered. Cycle starts ${fmtDate(newStart)}.`, 'success');
+  showToast(`Month ${newMonth} registered! Cycle starts ${fmtDate(newStart)}. Fee is now owing.`, 'success');
   closeModal('viewStudentModal');
   await loadAll();
 }
 
 // ── Temp VIP ──────────────────────────────────────────────────
+// RULE: Cannot grant temp VIP if the student's cycle has ended
 async function grantTempVIP(studentId) {
   const s = allStudents.find(x => x.id === studentId);
   if (!s) return;
+
+  // Block if cycle has ended
+  if (ownerProfile.mode === 'recurring' && s.cycle_start) {
+    const cycle = calcCycle(s);
+    if (cycle.expired) {
+      showToast('Cannot grant Temp VIP — this student\'s cycle has ended. Register a new month first.', 'error');
+      return;
+    }
+  }
+
   const tempSerial = getNextTempSerial();
-  const updates = { temp_vip: true, vip_active: true, is_vip: true, vip_type: 'temp', serial: tempSerial };
+  const updates    = {
+    temp_vip:   true,
+    vip_active: true,
+    is_vip:     true,
+    vip_type:   'temp',
+    serial:     tempSerial
+  };
   if (ownerProfile.mode === 'recurring' && !s.cycle_start) {
     updates.cycle_start = new Date().toISOString().split('T')[0];
   }
+
   const { error } = await _supabase.from('students')
     .update(updates).eq('id', studentId).eq('owner_id', currentUserId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
@@ -727,7 +718,11 @@ async function grantTempVIP(studentId) {
 async function removeTempVIP(studentId) {
   if (!confirm('Remove temporary VIP access for this student?')) return;
   const { error } = await _supabase.from('students').update({
-    temp_vip: false, vip_active: false, is_vip: false, serial: null, vip_type: null
+    temp_vip:   false,
+    vip_active: false,
+    is_vip:     false,
+    serial:     null,
+    vip_type:   null
   }).eq('id', studentId).eq('owner_id', currentUserId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast('Temporary VIP removed.', 'success');
@@ -736,13 +731,16 @@ async function removeTempVIP(studentId) {
 
 // ── View Student Modal ────────────────────────────────────────
 function viewStudent(studentId) {
-  const s = allStudents.find(x => x.id === studentId);
+  const s           = allStudents.find(x => x.id === studentId);
   if (!s) return;
   const isRecurring  = ownerProfile.mode === 'recurring';
   const cycle        = isRecurring ? calcCycle(s) : null;
   const stuPayments  = allPayments.filter(p => p.student_id === studentId);
   const cycleExpired = isRecurring && s.cycle_start && cycle.expired && !s.vip_active;
   const fullyPaid    = s.balance <= 0;
+
+  // canRegisterNewMonth: cycle ended AND fully paid
+  const canRegisterNewMonth = cycleExpired && fullyPaid;
 
   let timerHtml = '';
   if (isRecurring) {
@@ -763,18 +761,23 @@ function viewStudent(studentId) {
         </div>`;
     } else if (cycleExpired) {
       timerHtml = `<div class="alert-item alert-danger" style="margin:12px 0">
-        Cycle ended on ${fmtDate(cycle.due)}.
-        ${fullyPaid ? '<em>Student can register a new month.</em>' : '<em>Payment required to continue.</em>'}
+        <strong>Cycle ended on ${fmtDate(cycle.due)}.</strong><br>
+        ${fullyPaid
+          ? '<em style="color:var(--success)">✓ Fully paid — ready to register next month.</em>'
+          : `<em style="color:var(--danger)">⚠ Balance of ${formatNaira(s.balance)} must be completed before registering next month.</em>`
+        }
       </div>`;
     }
   }
 
+  // Payment history — grouped by month
   const histHtml = stuPayments.length ? `
-    <div style="margin-top:16px"><strong>Payment History</strong>
+    <div style="margin-top:16px"><strong>Payment History (All Months)</strong>
     <table class="data-table" style="margin-top:8px">
-      <thead><tr><th>Amount</th><th>Method</th><th>Date</th><th>Serial</th></tr></thead>
+      <thead><tr><th>Month</th><th>Amount</th><th>Method</th><th>Date</th><th>Serial</th></tr></thead>
       <tbody>
         ${stuPayments.map(p => `<tr>
+          <td>Month ${p.month_number || 1}</td>
           <td>${formatNaira(p.amount)}</td>
           <td>${p.method || '—'}</td>
           <td>${fmtDate(p.payment_date)}</td>
@@ -792,7 +795,7 @@ function viewStudent(studentId) {
       <div class="info-row"><span>Name</span><strong>${s.name}</strong></div>
       <div class="info-row"><span>Class</span><strong>${s.class || '—'}</strong></div>
       ${loginInfo}
-      <div class="info-row"><span>Serial (VIP)</span><strong>${s.serial ? '#' + s.serial : 'Not assigned'}</strong></div>
+      <div class="info-row"><span>Serial</span><strong>${s.serial ? '#' + s.serial + (s.vip_active ? ' (Active)' : ' (Inactive — pay to reactivate)') : 'Not assigned'}</strong></div>
       <div class="info-row"><span>Email</span><strong>${s.email || '—'}</strong></div>
       <div class="info-row"><span>Total Fee</span><strong>${formatNaira(s.total_fee)}</strong></div>
       <div class="info-row"><span>Amount Paid</span><strong>${formatNaira(s.amount_paid)}</strong></div>
@@ -806,11 +809,20 @@ function viewStudent(studentId) {
   `;
 
   // Buttons
-  document.getElementById('viewPayBtn').onclick    = () => { closeModal('viewStudentModal'); openRecordPayment(studentId); };
-  document.getElementById('viewVIPBtn').textContent = s.temp_vip ? 'Remove Temp VIP' : 'Grant Temp VIP';
-  document.getElementById('viewVIPBtn').onclick     = s.temp_vip
-    ? () => { removeTempVIP(studentId); closeModal('viewStudentModal'); }
-    : () => grantTempVIP(studentId);
+  document.getElementById('viewPayBtn').onclick = () => { closeModal('viewStudentModal'); openRecordPayment(studentId); };
+
+  // Grant/Remove Temp VIP button — hide if cycle ended
+  const vipBtn = document.getElementById('viewVIPBtn');
+  if (isRecurring && cycleExpired) {
+    // Cycle ended — hide temp VIP button entirely
+    vipBtn.style.display = 'none';
+  } else {
+    vipBtn.style.display = '';
+    vipBtn.textContent   = s.temp_vip ? 'Remove Temp VIP' : 'Grant Temp VIP';
+    vipBtn.onclick       = s.temp_vip
+      ? () => { removeTempVIP(studentId); closeModal('viewStudentModal'); }
+      : () => grantTempVIP(studentId);
+  }
 
   const pauseBtn = document.getElementById('viewPauseBtn');
   if (pauseBtn) {
@@ -818,15 +830,21 @@ function viewStudent(studentId) {
     pauseBtn.onclick = () => openPauseModal(studentId);
   }
 
-  // Register new month button
+  // Register new month button — only if cycle ended AND fully paid
   const footer   = document.querySelector('#viewStudentModal .modal-footer');
   const existing = document.getElementById('regNewMonthBtn');
   if (existing) existing.remove();
+
   if (isRecurring && cycleExpired) {
     const btn = document.createElement('button');
-    btn.id = 'regNewMonthBtn'; btn.className = 'btn-primary';
-    btn.textContent = `Register Month ${(s.month_number || 1) + 1}`;
-    btn.onclick = () => registerNewMonth(studentId);
+    btn.id        = 'regNewMonthBtn';
+    btn.className = canRegisterNewMonth ? 'btn-primary' : 'btn-secondary';
+    btn.textContent = canRegisterNewMonth
+      ? `Register Month ${(s.month_number || 1) + 1}`
+      : `Complete Payment to Register Month ${(s.month_number || 1) + 1}`;
+    btn.disabled  = !canRegisterNewMonth;
+    btn.title     = canRegisterNewMonth ? '' : 'Student must fully pay before registering next month';
+    btn.onclick   = canRegisterNewMonth ? () => registerNewMonth(studentId) : null;
     footer.insertBefore(btn, footer.firstChild);
   }
 
@@ -854,7 +872,9 @@ async function executePause() {
   await _supabase.from('students')
     .update({ paused: true, pause_reason: reason, paused_at: new Date().toISOString() })
     .eq('id', studentId).eq('owner_id', currentUserId);
-  closeModal('pauseModal'); showToast('Cycle paused.', 'success'); await loadAll();
+  closeModal('pauseModal');
+  showToast('Cycle paused.', 'success');
+  await loadAll();
 }
 
 async function executeResume() {
@@ -862,7 +882,9 @@ async function executeResume() {
   await _supabase.from('students')
     .update({ paused: false, pause_reason: null, paused_at: null })
     .eq('id', studentId).eq('owner_id', currentUserId);
-  closeModal('pauseModal'); showToast('Cycle resumed.', 'success'); await loadAll();
+  closeModal('pauseModal');
+  showToast('Cycle resumed.', 'success');
+  await loadAll();
 }
 
 // ── Edit Student ──────────────────────────────────────────────
@@ -922,7 +944,6 @@ async function saveSettings() {
 
   if (error) { showToast('Error saving settings: ' + error.message, 'error'); return; }
 
-  // Reload profile
   const { data: p } = await _supabase.from('profiles').select('*').eq('id', currentUserId).single();
   ownerProfile = p;
   document.getElementById('adminNameDisplay').textContent  = p.centre_name;
@@ -940,8 +961,67 @@ async function changePassword() {
   const { error } = await _supabase.auth.updateUser({ password: np });
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast('Password updated successfully.', 'success');
-  document.getElementById('newPasswordInput').value    = '';
+  document.getElementById('newPasswordInput').value     = '';
   document.getElementById('confirmPasswordInput').value = '';
+}
+
+// ── Delete Account ────────────────────────────────────────────
+async function deleteAccount() {
+  const input = document.getElementById('deleteAccountInput')?.value?.trim();
+  if (input !== 'DELETE') {
+    showToast('Type DELETE to confirm account deletion.', 'error');
+    return;
+  }
+
+  // Delete all student data first
+  await _supabase.from('payments').delete().eq('owner_id', currentUserId);
+  await _supabase.from('students').delete().eq('owner_id', currentUserId);
+  await _supabase.from('profiles').delete().eq('id', currentUserId);
+
+  // Sign out and delete auth account
+  await _supabase.auth.signOut();
+  localStorage.clear();
+
+  showToast('Account deleted. Redirecting...', 'info');
+  setTimeout(() => { window.location.href = './index.html'; }, 1500);
+}
+
+function confirmDeleteAccount() {
+  const existing = document.getElementById('deleteAccountModal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'deleteAccountModal';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header danger-header">
+        <h3>Delete Account</h3>
+        <button onclick="document.getElementById('deleteAccountModal').remove()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="danger-warning">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <p>This will permanently delete your <strong>account, all students, and all payment records</strong>. This cannot be undone.</p>
+        </div>
+        <div class="form-group" style="margin-top:16px">
+          <label>Type <strong>DELETE</strong> to confirm</label>
+          <input type="text" id="deleteAccountInput" placeholder="Type DELETE here"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('deleteAccountModal').remove()">Cancel</button>
+        <button class="btn-danger" onclick="deleteAccount()">Permanently Delete Account</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 // ── Reset System ──────────────────────────────────────────────
@@ -966,7 +1046,7 @@ function showSection(name, clickedEl) {
   const sec = document.getElementById('section-' + name);
   if (sec) sec.classList.add('active');
   if (clickedEl) clickedEl.classList.add('active');
-  const titles = { dashboard:'Dashboard', students:'Students', payments:'Payments', vip:'VIP / Active', alerts:'Alerts', settings:'Settings' };
+  const titles = { dashboard: 'Dashboard', students: 'Students', payments: 'Payments', vip: 'VIP / Active', alerts: 'Alerts', settings: 'Settings' };
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (window.innerWidth < 768) closeSidebar();
 }
@@ -975,6 +1055,7 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebarOverlay').classList.toggle('open');
 }
+
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
@@ -1004,7 +1085,8 @@ function getNextTempSerial() {
 function initCookieBanner() {
   if (localStorage.getItem('velune_cookies')) return;
   const banner = document.createElement('div');
-  banner.className = 'cookie-banner'; banner.id = 'cookieBanner';
+  banner.className = 'cookie-banner';
+  banner.id = 'cookieBanner';
   banner.innerHTML = `
     <div class="cookie-banner-text">
       <strong>🍪 We use cookies</strong>
@@ -1023,11 +1105,12 @@ function showAdminWelcome(adminName, stats) {
   const key = 'velune_welcomed_admin';
   if (sessionStorage.getItem(key)) return;
   sessionStorage.setItem(key, '1');
-  const hour = new Date().getHours();
+  const hour     = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const firstName = (adminName || 'Admin').split(' ')[0];
-  const overlay = document.createElement('div');
-  overlay.className = 'welcome-modal-overlay'; overlay.id = 'welcomeOverlay';
+  const overlay  = document.createElement('div');
+  overlay.className = 'welcome-modal-overlay';
+  overlay.id = 'welcomeOverlay';
   overlay.innerHTML = `
     <div class="welcome-modal">
       <div class="welcome-modal-icon">👋</div>
@@ -1043,16 +1126,15 @@ function showAdminWelcome(adminName, stats) {
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
+
 function showAccessBanner(html, bgColor) {
   const banner = document.createElement('div');
   banner.style.cssText = `
     position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
-    background: ${bgColor};
-    color: white; text-align: center;
+    background: ${bgColor}; color: white; text-align: center;
     padding: 10px 20px; font-size: 0.85rem; font-weight: 600;
     display: flex; align-items: center; justify-content: center; gap: 12px;
-    font-family: 'DM Sans', sans-serif;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    font-family: 'DM Sans', sans-serif; box-shadow: 0 2px 12px rgba(0,0,0,0.2);
   `;
   banner.innerHTML = html + `
     <button onclick="this.parentElement.remove();document.body.style.paddingTop=''"
