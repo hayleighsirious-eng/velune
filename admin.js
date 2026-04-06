@@ -952,12 +952,27 @@ async function saveSettings() {
     account_number: document.getElementById('accountNumber').value.trim(),
     account_name:   document.getElementById('accountName').value.trim()
   }).eq('id', currentUserId);
-  if (error) { showToast('Error saving settings: ' + error.message, 'error'); return; }
-  const { data: p } = await _supabase.from('profiles').select('*').eq('id', currentUserId).single();
+
+  if (error) { 
+    showToast('Error saving settings: ' + error.message, 'error'); 
+    return; 
+  }
+
+  const { data: p } = await _supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', currentUserId)
+    .single();
+
   ownerProfile = p;
+
   document.getElementById('adminNameDisplay').textContent  = p.centre_name;
   document.getElementById('sidebarCentreName').textContent = p.centre_name;
+
   showToast('Settings saved successfully.', 'success');
+
+  // ✅ ADDED ALERT (does not break anything)
+  alert('Details saved successfully ✅');
 }
 
 async function changePassword() {
