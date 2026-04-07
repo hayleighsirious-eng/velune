@@ -442,6 +442,7 @@ async function addStudent() {
   const errEl    = document.getElementById('addStudentError');
 
   if (!name)         { showErr(errEl, 'Name is required.'); return; }
+  if (!email)        { showErr(errEl, 'Student WhatsApp number is required.'); return; }
   if (totalFee <= 0) { showErr(errEl, 'Total fee must be greater than 0.'); return; }
   errEl.style.display = 'none';
 
@@ -634,9 +635,16 @@ async function recordPayment() {
   if (payErr) showToast('Payment saved but history log failed: ' + payErr.message, 'error');
 
   paymentSubmitting = false;
-  closeModal('recordPaymentModal');
-  showToast(fullPaid ? `Payment complete! Serial #${updates.serial} issued. VIP active.` : 'Payment recorded successfully.', 'success');
-  await loadAll();
+ const hadExpiredCycle = ownerProfile.mode === 'recurring' && s.cycle_start && calcCycle(s).expired;
+closeModal('recordPaymentModal');
+showToast(fullPaid ? `Payment complete! Serial #${updates.serial} issued. VIP active.` : 'Payment recorded successfully.', 'success');
+await loadAll();
+if (fullPaid && hadExpiredCycle) {
+  const nextMonth = (s.month_number || 1) + 1;
+  if (confirm(`✅ ${s.name} has fully paid!\n\nWould you like to register them for Month ${nextMonth} now?`)) {
+    registerNewMonth(s.id);
+  }
+}
 }
 
 function confirmVoidPayment(paymentId, studentName, amount) {
@@ -1099,7 +1107,8 @@ function sendWhatsAppReminder(studentId) {
     (ownerProfile.account_name   ? `Name: ${ownerProfile.account_name}\n`      : '') +
     `\nThank you.`
   );
-  const phone = ownerProfile.whatsapp.replace(/\D/g, '');
+  const studentPhone = (s.email || '').replace(/\D/g, '');
+const phone = studentPhone || ownerProfile.whatsapp.replace(/\D/g, '');
   window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
 }
 
