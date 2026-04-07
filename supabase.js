@@ -5,9 +5,6 @@
 const SUPABASE_URL  = 'https://cbsoztcgnzhetgalalil.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNic296dGNnbnpoZXRnYWxhbGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzODYzNTQsImV4cCI6MjA5MDk2MjM1NH0.PrdwDAJxSs-ygmIT6ew_TpxvAlHqged1V4mmje15CaI';
 
-// ── Cycle & alert settings ─────────────────────────────────
-// TESTING: set to 1 day so you have time to test without it expiring instantly.
-// Change to 30 and 5 for production (real students).
 const CYCLE_DAYS = 1;  // ← change to 30 for production
 const ALERT_DAYS = 0.5; // ← change to 5 for production
 
@@ -26,9 +23,6 @@ function formatNaira(n) {
   return '₦' + num.toLocaleString('en-NG', { minimumFractionDigits: 0 });
 }
 
-// FIX: parse cycle_start as LOCAL time using 'T00:00:00' suffix
-// Without this fix, '2026-04-06' gets parsed as UTC midnight which is
-// 1:00 AM Nigeria time — causing cycles to expire 1 hour early
 function calcCycle(student) {
   if (!student || !student.cycle_start) {
     return { daysLeft: 0, pct: 0, due: null, expired: true };
@@ -86,11 +80,10 @@ function showErr(el, msg) {
 }
 
 // ============================================================
-//  VELUNE — LICENSE KEY SYSTEM
+//  VELUNE — LICENSE ACTIVATION (Secure — via Edge Function)
+//  The salt, hash logic and plan types are all on the server.
+//  Nothing sensitive is exposed in the browser.
 // ============================================================
-
-const LICENSE_SALT = 'velune2024xk9mq';
-const LICENSE_DAYS = 30;
 
 async function checkAccess(userId) {
   const { data: profile, error } = await _supabase
@@ -128,68 +121,31 @@ async function checkAccess(userId) {
 }
 
 async function activateLicense(userId, code) {
-  code = code.trim().toUpperCase();
-  const parts = code.split('-');
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) return { success: false, message: 'Not logged in.' };
 
-  // Support VLN-M/Y/L-HASH-DATE (4 parts) and legacy VLN-HASH-DATE (3 parts)
-  let planType, hashPart, datePart;
-  if (parts.length === 4 && parts[0] === 'VLN' && ['M','Y','L'].includes(parts[1])) {
-    planType = parts[1]; hashPart = parts[2]; datePart = parts[3];
-  } else if (parts.length === 3 && parts[0] === 'VLN') {
-    planType = 'M'; hashPart = parts[1]; datePart = parts[2]; // legacy = monthly
-  } else {
-    return { success: false, message: 'Invalid code format.' };
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/validate-license`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ licenseKey: code, userId: userId })
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.valid) {
+      return { success: true, message: result.message };
+    }
+
+    return { success: false, message: result.message || 'Invalid code.' };
+
+  } catch (err) {
+    return { success: false, message: 'Connection error. Please try again.' };
   }
-
-  if (datePart.length !== 8) return { success: false, message: 'Invalid code date.' };
-
-  const year = parseInt(datePart.substring(0,4));
-  const month = parseInt(datePart.substring(4,6)) - 1;
-  const day = parseInt(datePart.substring(6,8));
-  const issueDate = new Date(year, month, day);
-  if (isNaN(issueDate.getTime())) return { success: false, message: 'Invalid code date.' };
-
-  const codeExpiry = new Date(issueDate.getTime() + 7 * 86400000);
-  if (new Date() > codeExpiry) return { success: false, message: 'This code has expired. Please contact admin for a new one.' };
-
-  const expectedHash = await makeHash(userId + planType + datePart + LICENSE_SALT);
-  if (hashPart !== expectedHash) return { success: false, message: 'Invalid code. Please double-check it and try again.' };
-
-  const { data: profile } = await _supabase
-    .from('profiles').select('used_codes, license_end, lifetime_access').eq('id', userId).single();
-
-  const usedCodes = profile?.used_codes || [];
-  if (usedCodes.includes(code)) return { success: false, message: 'This code has already been used.' };
-
-  const now = Date.now();
-  const currentEnd = (profile?.license_end && profile.license_end > now) ? profile.license_end : now;
-
-  let updates = {};
-  let successMsg = '';
-
-  if (planType === 'L') {
-    updates.lifetime_access = true;
-    updates.license_end = null;
-    successMsg = 'Lifetime access activated! Your dashboard never expires.';
-  } else {
-    const days = planType === 'Y' ? 365 : 30;
-    updates.license_end = currentEnd + (days * 86400000);
-    successMsg = planType === 'Y'
-      ? 'Yearly plan activated! Access extended by 365 days.'
-      : 'Monthly plan activated! Access extended by 30 days.';
-  }
-
-  usedCodes.push(code);
-  updates.used_codes = usedCodes;
-
-  await _supabase.from('profiles').update(updates).eq('id', userId);
-  return { success: true, message: successMsg };
-}
-
-async function makeHash(str) {
-  const buf  = new TextEncoder().encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  const arr  = Array.from(new Uint8Array(hash));
-  const hex  = arr.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hex.substring(0, 8).toUpperCase();
 }
