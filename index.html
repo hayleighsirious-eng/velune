@@ -1388,7 +1388,38 @@ body {
           <div class="auth-ok" id="registerSuccess"></div>
           <div class="field"><label>Centre name</label><input type="text" id="regCentreName" placeholder="e.g. Excel Tutors, 360 Academy"/></div>
           <div class="field"><label>Email address</label><input type="email" id="regEmail" placeholder="you@centre.com" autocomplete="email"/></div>
-          <div class="field"><label>Password</label><input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password"/></div>
+          <!-- PASSWORD FIELD — replace the old single <div class="field"> password line with this -->
+<div class="field" style="margin-bottom:14px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <label style="margin-bottom:0">Password</label>
+    <span id="regPwStrengthLabel" style="font-family:'Geist Mono',monospace;font-size:0.67rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#6B6B6B;transition:color 0.3s">—</span>
+  </div>
+  <div style="position:relative">
+    <input type="password" id="regPassword" placeholder="Create a strong password" autocomplete="new-password"
+      oninput="evalRegPw(this.value)"
+      style="padding-right:40px"/>
+    <button type="button" onclick="toggleRegPw()" id="regPwToggleBtn"
+      style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;color:#6B6B6B;display:flex;align-items:center;transition:color 0.2s">
+      <svg id="regPwEyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+      </svg>
+    </button>
+  </div>
+  <!-- strength bars -->
+  <div style="display:flex;gap:4px;margin-top:8px">
+    <div id="regPwB1" style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);transition:background 0.3s"></div>
+    <div id="regPwB2" style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);transition:background 0.3s"></div>
+    <div id="regPwB3" style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);transition:background 0.3s"></div>
+    <div id="regPwB4" style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.07);transition:background 0.3s"></div>
+  </div>
+  <!-- hints -->
+  <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+    <div id="regPwHintUpper" style="display:flex;align-items:center;gap:7px;font-size:0.72rem;color:#6B6B6B;transition:color 0.3s"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;display:inline-block"></span>At least one uppercase letter</div>
+    <div id="regPwHintSpecial" style="display:flex;align-items:center;gap:7px;font-size:0.72rem;color:#6B6B6B;transition:color 0.3s"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;display:inline-block"></span>At least one special character (!@#$...)</div>
+    <div id="regPwHintNums" style="display:flex;align-items:center;gap:7px;font-size:0.72rem;color:#6B6B6B;transition:color 0.3s"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;display:inline-block"></span>At least two numbers</div>
+    <div id="regPwHintLen" style="display:flex;align-items:center;gap:7px;font-size:0.72rem;color:#6B6B6B;transition:color 0.3s"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;display:inline-block"></span>At least 8 characters</div>
+  </div>
+</div>
           <div class="field">
             <label>Payment mode</label>
             <div class="mode-grid">
@@ -1813,7 +1844,7 @@ async function handleForgotPassword() {
   errEl.style.display = sucEl.style.display = 'none';
   if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display = 'block'; return; }
   btn.textContent = 'Sending…'; btn.disabled = true;
-  const { error } = await _supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/index.html' });
+ const { error } = await _supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' });
   if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
   else { sucEl.innerHTML = `✓ Reset link sent to <strong>${email}</strong>. Check your inbox.`; sucEl.style.display = 'block'; }
   btn.textContent = 'Send reset link'; btn.disabled = false;
@@ -1867,7 +1898,7 @@ document.addEventListener('keydown', e => {
   if (active.id === 'panel-forgot')   handleForgotPassword();
 });
 
-(async function checkPasswordReset() {
+
   if (window.location.hash.includes('type=recovery')) {
     switchAuthTab('forgot');
     document.getElementById('panel-forgot').innerHTML = `
@@ -1893,6 +1924,43 @@ async function submitNewPassword() {
   const { error } = await _supabase.auth.updateUser({ password: pw1 });
   if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
   else { sucEl.textContent = '✓ Password updated! Redirecting…'; sucEl.style.display = 'block'; setTimeout(() => window.location.href = './admin.html', 2000); }
+}
+
+function toggleRegPw() {
+  const inp = document.getElementById('regPassword');
+  const icon = document.getElementById('regPwEyeIcon');
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  icon.innerHTML = showing
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+function evalRegPw(val) {
+  const checks = {
+    upper: /[A-Z]/.test(val),
+    special: /[^A-Za-z0-9]/.test(val),
+    nums: (val.match(/[0-9]/g)||[]).length >= 2,
+    len: val.length >= 8
+  };
+  const setHint = (id, met) => {
+    document.getElementById(id).style.color = met ? '#4ADE80' : '#6B6B6B';
+  };
+  setHint('regPwHintUpper', checks.upper);
+  setHint('regPwHintSpecial', checks.special);
+  setHint('regPwHintNums', checks.nums);
+  setHint('regPwHintLen', checks.len);
+
+  const score = Object.values(checks).filter(Boolean).length;
+  const barColors = ['','#EF4444','#F59E0B','#3B82F6','#22C55E'];
+  const labels = ['—','Weak','Fair','Good','Strong'];
+  const labelColors = ['#6B6B6B','#EF4444','#F59E0B','#3B82F6','#22C55E'];
+  ['regPwB1','regPwB2','regPwB3','regPwB4'].forEach((id, i) => {
+    document.getElementById(id).style.background = i < score ? barColors[score] : 'rgba(255,255,255,0.07)';
+  });
+  const lbl = document.getElementById('regPwStrengthLabel');
+  lbl.textContent = val.length ? labels[score] : '—';
+  lbl.style.color = val.length ? labelColors[score] : '#6B6B6B';
 }
 </script>
 </body>
