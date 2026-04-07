@@ -1898,17 +1898,10 @@ document.addEventListener('keydown', e => {
   if (active.id === 'panel-forgot')   handleForgotPassword();
 });
 
-
+(async function checkPasswordReset() {
   if (window.location.hash.includes('type=recovery')) {
     switchAuthTab('forgot');
-    document.getElementById('panel-forgot').innerHTML = `
-      <div class="auth-title">Set new password</div>
-      <div class="auth-sub">Enter and confirm your new password below.</div>
-      <div class="auth-err" id="resetPwError"></div>
-      <div class="auth-ok" id="resetPwSuccess"></div>
-      <div class="field"><label>New Password</label><input type="password" id="newPw1" placeholder="New password (min 6 chars)"/></div>
-      <div class="field"><label>Confirm Password</label><input type="password" id="newPw2" placeholder="Confirm password"/></div>
-      <button class="btn-submit" onclick="submitNewPassword()">Update Password</button>`;
+    document.getElementById('panel-forgot').innerHTML = `...`;
     scrollToAuth('signin');
   }
 })();
