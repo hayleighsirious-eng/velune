@@ -148,6 +148,16 @@
         <button class="filter-btn" onclick="setFilter('vip',this)">VIP</button>
         <button class="filter-btn" onclick="setFilter('expired',this)">Expired</button>
       </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+  <button class="btn-primary" onclick="exportStudentsCSV()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    Export CSV
+  </button>
+</div>
       <div class="table-wrap">
         <table class="data-table">
           <thead><tr><th>Name</th><th>Class</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th><th>VIP</th><th>Expires</th><th>Actions</th></tr></thead>
@@ -161,6 +171,16 @@
   <section id="section-payments" class="section">
     <div class="section-inner">
       <h2 class="section-title">Payment History</h2>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+  <button class="btn-primary" onclick="exportPaymentsCSV()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    Export CSV
+  </button>
+</div>
       <div class="table-wrap">
         <table class="data-table">
           <thead><tr><th>Student</th><th>Amount</th><th>Method</th><th>Date</th><th>Serial</th><th></th></tr></thead>
