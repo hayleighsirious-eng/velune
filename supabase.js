@@ -95,15 +95,18 @@ const LICENSE_DAYS = 30;
 async function checkAccess(userId) {
   const { data: profile, error } = await _supabase
     .from('profiles')
-    .select('trial_end, license_end')
+    .select('trial_end, license_end, lifetime_access')
     .eq('id', userId)
     .single();
 
-  if (error || !profile) {
-    return { allowed: false, daysLeft: 0, reason: 'no_profile' };
-  }
+  if (error || !profile) return { allowed: false, daysLeft: 0, reason: 'no_profile' };
 
   const now = Date.now();
+
+  // Lifetime access — never expires
+  if (profile.lifetime_access) {
+    return { allowed: true, daysLeft: 99999, reason: 'lifetime' };
+  }
 
   if (profile.license_end && now < profile.license_end) {
     const daysLeft = Math.ceil((profile.license_end - now) / 86400000);
@@ -111,9 +114,7 @@ async function checkAccess(userId) {
   }
 
   if (!profile.trial_end) {
-    // First login — start 30-day trial
-    // Change (30 * 86400000) to a smaller number only for testing
-    const trialEnd = now + (30 * 86400000);
+    const trialEnd = now + (1 * 86400000);
     await _supabase.from('profiles').update({ trial_end: trialEnd }).eq('id', userId);
     return { allowed: true, daysLeft: 30, reason: 'trial' };
   }
@@ -123,67 +124,66 @@ async function checkAccess(userId) {
     return { allowed: true, daysLeft, reason: 'trial' };
   }
 
-  if (profile.license_end && now >= profile.license_end) {
-    return { allowed: false, daysLeft: 0, reason: 'license_expired' };
-  }
-
   return { allowed: false, daysLeft: 0, reason: 'expired' };
 }
 
 async function activateLicense(userId, code) {
   code = code.trim().toUpperCase();
-
   const parts = code.split('-');
-  if (parts.length !== 3 || parts[0] !== 'VLN') {
-    return { success: false, message: 'Invalid code format. Codes look like VLN-XXXXXXXX-YYYYMMDD' };
+
+  // Support VLN-M/Y/L-HASH-DATE (4 parts) and legacy VLN-HASH-DATE (3 parts)
+  let planType, hashPart, datePart;
+  if (parts.length === 4 && parts[0] === 'VLN' && ['M','Y','L'].includes(parts[1])) {
+    planType = parts[1]; hashPart = parts[2]; datePart = parts[3];
+  } else if (parts.length === 3 && parts[0] === 'VLN') {
+    planType = 'M'; hashPart = parts[1]; datePart = parts[2]; // legacy = monthly
+  } else {
+    return { success: false, message: 'Invalid code format.' };
   }
 
-  const hashPart = parts[1];
-  const datePart = parts[2];
+  if (datePart.length !== 8) return { success: false, message: 'Invalid code date.' };
 
-  if (datePart.length !== 8) {
-    return { success: false, message: 'Invalid code. Please check and try again.' };
-  }
-
-  const year      = parseInt(datePart.substring(0, 4));
-  const month     = parseInt(datePart.substring(4, 6)) - 1;
-  const day       = parseInt(datePart.substring(6, 8));
+  const year = parseInt(datePart.substring(0,4));
+  const month = parseInt(datePart.substring(4,6)) - 1;
+  const day = parseInt(datePart.substring(6,8));
   const issueDate = new Date(year, month, day);
-
-  if (isNaN(issueDate.getTime())) {
-    return { success: false, message: 'Invalid code date.' };
-  }
+  if (isNaN(issueDate.getTime())) return { success: false, message: 'Invalid code date.' };
 
   const codeExpiry = new Date(issueDate.getTime() + 7 * 86400000);
-  if (new Date() > codeExpiry) {
-    return { success: false, message: 'This code has expired. Please contact admin for a new one.' };
-  }
+  if (new Date() > codeExpiry) return { success: false, message: 'This code has expired. Please contact admin for a new one.' };
 
-  const expectedHash = await makeHash(userId + datePart + LICENSE_SALT);
-  if (hashPart !== expectedHash) {
-    return { success: false, message: 'Invalid code. Please double-check it and try again.' };
-  }
+  const expectedHash = await makeHash(userId + planType + datePart + LICENSE_SALT);
+  if (hashPart !== expectedHash) return { success: false, message: 'Invalid code. Please double-check it and try again.' };
 
   const { data: profile } = await _supabase
-    .from('profiles').select('used_codes, license_end').eq('id', userId).single();
+    .from('profiles').select('used_codes, license_end, lifetime_access').eq('id', userId).single();
 
   const usedCodes = profile?.used_codes || [];
-  if (usedCodes.includes(code)) {
-    return { success: false, message: 'This code has already been used.' };
+  if (usedCodes.includes(code)) return { success: false, message: 'This code has already been used.' };
+
+  const now = Date.now();
+  const currentEnd = (profile?.license_end && profile.license_end > now) ? profile.license_end : now;
+
+  let updates = {};
+  let successMsg = '';
+
+  if (planType === 'L') {
+    updates.lifetime_access = true;
+    updates.license_end = null;
+    successMsg = 'Lifetime access activated! Your dashboard never expires.';
+  } else {
+    const days = planType === 'Y' ? 365 : 30;
+    updates.license_end = currentEnd + (days * 86400000);
+    successMsg = planType === 'Y'
+      ? 'Yearly plan activated! Access extended by 365 days.'
+      : 'Monthly plan activated! Access extended by 30 days.';
   }
 
-  const now        = Date.now();
-  const currentEnd = (profile?.license_end && profile.license_end > now) ? profile.license_end : now;
-  const licenseEnd = currentEnd + (LICENSE_DAYS * 86400000);
-
   usedCodes.push(code);
+  updates.used_codes = usedCodes;
 
-  await _supabase.from('profiles').update({
-    license_end: licenseEnd,
-    used_codes:  usedCodes
-  }).eq('id', userId);
-
-  return { success: true, message: 'Activated! Your access is extended by 30 days.' };
+  await _supabase.from('profiles').update(updates).eq('id', userId);
+  return { success: true, message: successMsg };
 }
 
 async function makeHash(str) {
