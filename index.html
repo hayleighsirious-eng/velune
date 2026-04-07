@@ -1793,7 +1793,7 @@ async function handleRegister() {
   if (!email) { errEl.textContent = 'Please enter your email.'; errEl.style.display = 'block'; return; }
   if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
   btn.textContent = 'Creating account…'; btn.disabled = true;
-  const { data, error } = await _supabase.auth.signUp({ email, password, options: { data: { centre_name: centreName, mode } } });
+const { data, error } = await _supabase.auth.signUp({ email, password, options: { data: { centre_name: centreName, mode }, emailRedirectTo: 'https://getvelune.vercel.app/index.html' } });
   if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; btn.textContent = 'Create free account'; btn.disabled = false; return; }
   if (data.user) { await _supabase.from('profiles').upsert({ id: data.user.id, centre_name: centreName, mode }); }
   if (data.session) { window.location.href = './admin.html'; }
