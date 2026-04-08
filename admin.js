@@ -812,7 +812,7 @@ function viewStudent(studentId) {
       <div class="info-row"><span>Class</span><strong>${s.class || '—'}</strong></div>
       ${loginInfo}
       <div class="info-row"><span>Serial</span><strong>${s.serial ? '#' + s.serial + (s.vip_active ? ' (Active)' : ' (Inactive — pay to reactivate)') : 'Not assigned'}</strong></div>
-      <div class="info-row"><span>Email</span><strong>${s.email || '—'}</strong></div>
+      <div class="info-row"><span>Whatsapp Number</span><strong>${s.email || '—'}</strong></div>
       <div class="info-row"><span>Total Fee</span><strong>${formatNaira(s.total_fee)}</strong></div>
       <div class="info-row"><span>Amount Paid</span><strong>${formatNaira(s.amount_paid)}</strong></div>
       <div class="info-row"><span>Balance</span><strong class="${s.balance > 0 ? 'text-red' : 'text-green'}">${formatNaira(s.balance)}</strong></div>
