@@ -5,8 +5,8 @@
 const SUPABASE_URL  = 'https://cbsoztcgnzhetgalalil.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNic296dGNnbnpoZXRnYWxhbGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzODYzNTQsImV4cCI6MjA5MDk2MjM1NH0.PrdwDAJxSs-ygmIT6ew_TpxvAlHqged1V4mmje15CaI';
 
-const CYCLE_DAYS = 1;  // ← change to 30 for production
-const ALERT_DAYS = 0.5; // ← change to 5 for production
+const CYCLE_DAYS = 30;  // ← change to 30 for production
+const ALERT_DAYS = 5; // ← change to 5 for production
 
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -107,7 +107,7 @@ async function checkAccess(userId) {
   }
 
   if (!profile.trial_end) {
-    const trialEnd = now + (1 * 86400000);
+    const trialEnd = now + (30 * 86400000);
     await _supabase.from('profiles').update({ trial_end: trialEnd }).eq('id', userId);
     return { allowed: true, daysLeft: 30, reason: 'trial' };
   }
