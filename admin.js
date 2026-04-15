@@ -270,11 +270,14 @@ function renderVIPGrid() {
   const grid = document.getElementById('vipGrid');
   const vipStudents = allStudents.filter(s => s.vip_active);
   grid.innerHTML = `
-    <div class="vip-search-bar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" id="vipSearchInput" placeholder="Search by name or serial…" oninput="filterVIP()"/>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div class="vip-search-bar" style="flex:1;min-width:200px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="vipSearchInput" placeholder="Search by name or serial…" oninput="filterVIP()"/>
+      </div>
+      <button class="btn-xs btn-red" style="padding:8px 14px;font-size:0.8rem" onclick="removeAllTempVIP()">🗑 Remove All Temp VIP</button>
     </div>
     <div id="vipCardsContainer"></div>
   `;
@@ -337,11 +340,14 @@ function renderVIPGridOneTime() {
   const grid = document.getElementById('vipGrid');
   const vipStudents = allStudents.filter(s => s.vip_active);
   grid.innerHTML = `
-    <div class="vip-search-bar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" id="vipSearchInputOT" placeholder="Search by name or serial…" oninput="filterVIPOneTime()"/>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div class="vip-search-bar" style="flex:1;min-width:200px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="vipSearchInputOT" placeholder="Search by name or serial…" oninput="filterVIPOneTime()"/>
+      </div>
+      <button class="btn-xs btn-red" style="padding:8px 14px;font-size:0.8rem" onclick="removeAllTempVIP()">🗑 Remove All Temp VIP</button>
     </div>
     <div id="vipCardsContainerOT"></div>
   `;
@@ -741,6 +747,21 @@ async function removeTempVIP(studentId) {
   }).eq('id', studentId).eq('owner_id', currentUserId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
   showToast('Temporary VIP removed.', 'success');
+  await loadAll();
+}
+
+async function removeAllTempVIP() {
+  const tempStudents = allStudents.filter(s => s.temp_vip && s.vip_active);
+  if (!tempStudents.length) { showToast('No temporary VIP students to remove.', 'error'); return; }
+  if (!confirm(`Remove Temporary VIP from all ${tempStudents.length} student(s)?\n\nThis affects: ${tempStudents.map(s => s.name).join(', ')}`)) return;
+
+  for (const s of tempStudents) {
+    await _supabase.from('students').update({
+      temp_vip: false, vip_active: false, is_vip: false, serial: null, vip_type: null
+    }).eq('id', s.id).eq('owner_id', currentUserId);
+  }
+
+  showToast(`Temporary VIP removed from ${tempStudents.length} student(s).`, 'success');
   await loadAll();
 }
 
