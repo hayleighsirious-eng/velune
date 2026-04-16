@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Velune — Manage Materials</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --navy:#0F1F3D; --navy-mid:#1A3260; --gold:#C9960C;
+      --gold-light:#E8B422; --gold-pale:#FDF3D8;
+      --white:#FFFFFF; --off-white:#F7F8FC;
+      --danger:#C0392B; --danger-bg:#FEF0EE;
+      --success:#0C7A4A; --success-bg:#E6F7F0;
+      --warning:#B7770D; --warning-bg:#FEF9EC;
+      --gray-100:#EEF0F6; --gray-200:#D8DCE9; --gray-400:#8E9AB5; --gray-600:#5A6680;
+      --radius:10px; --radius-lg:16px;
+      --shadow:0 2px 12px rgba(15,31,61,0.08);
+      --shadow-lg:0 8px 32px rgba(15,31,61,0.14);
+      --border: #E2E6F0;
+      --text-muted: #8E9AB5;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--off-white); min-height: 100vh; }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      padding: 0 24px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 16px rgba(15,31,61,0.2);
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg,var(--gold),var(--gold-light)); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .topbar-brand-name { font-family: 'Playfair Display', serif; font-size: 0.95rem; color: white; font-weight: 700; }
+    .btn-back { padding: 7px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85); border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .btn-back:hover { background: rgba(255,255,255,0.18); color: white; }
+
+    .page { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+    .page-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--navy); font-weight: 700; margin-bottom: 4px; }
+    .page-sub { font-size: 0.85rem; color: var(--gray-400); margin-bottom: 24px; }
+
+    .card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .card-header { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .card-title { font-size: 0.95rem; font-weight: 700; color: var(--navy); }
+    .card-body { padding: 20px 22px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--gray-600); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem; font-family: 'DM Sans', sans-serif; color: var(--navy); background: var(--off-white); transition: border 0.18s; }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { outline: none; border-color: var(--gold); background: white; }
+    .form-group textarea { min-height: 200px; resize: vertical; font-family: 'DM Sans', sans-serif; }
+
+    .btn-primary { padding: 10px 22px; background: var(--navy); color: white; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.18s; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-danger { padding: 6px 14px; background: transparent; color: var(--danger); border: 1px solid rgba(192,57,43,0.3); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-danger:hover { background: var(--danger-bg); }
+
+    .type-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .type-btn { padding: 8px 18px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--gray-600); background: white; transition: all 0.18s; }
+    .type-btn.active { border-color: var(--gold); background: var(--gold-pale); color: var(--navy); }
+
+    .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--off-white); }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--gold); background: var(--gold-pale); }
+    .upload-zone-icon { margin: 0 auto 12px; width: 48px; height: 48px; background: var(--gray-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .upload-zone-icon svg { stroke: var(--gray-400); }
+    .upload-zone-title { font-weight: 600; color: var(--navy); font-size: 0.9rem; margin-bottom: 4px; }
+    .upload-zone-sub { font-size: 0.78rem; color: var(--gray-400); }
+    .upload-progress { display: none; margin-top: 12px; }
+    .progress-bar-wrap { height: 6px; background: var(--gray-100); border-radius: 100px; overflow: hidden; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 100px; transition: width 0.3s; }
+
+    /* Materials list */
+    .mat-item { display: flex; align-items: center; gap: 14px; padding: 14px 22px; border-bottom: 1px solid var(--border); }
+    .mat-item:last-child { border-bottom: none; }
+    .mat-icon { width: 40px; height: 40px; background: var(--gold-pale); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .mat-icon svg { stroke: var(--gold); }
+    .mat-info { flex: 1; }
+    .mat-title { font-size: 0.88rem; font-weight: 600; color: var(--navy); }
+    .mat-meta { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; }
+    .mat-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .mat-badge.pdf { background: rgba(192,57,43,0.1); color: var(--danger); }
+    .mat-badge.text { background: rgba(12,122,74,0.1); color: var(--success); }
+
+    .empty-state { padding: 40px; text-align: center; color: var(--gray-400); font-size: 0.85rem; }
+
+    .form-error { background: var(--danger-bg); color: var(--danger); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; font-weight: 600; margin-top: 10px; display: none; }
+
+    .info-banner { background: var(--gold-pale); border: 1px solid rgba(201,150,12,0.25); border-radius: var(--radius); padding: 12px 16px; font-size: 0.82rem; color: var(--navy); display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; }
+    .info-banner svg { stroke: var(--gold); flex-shrink: 0; margin-top: 1px; }
+
+    .toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast { padding: 10px 18px; border-radius: 10px; font-size: 0.83rem; font-weight: 600; color: white; background: var(--navy); box-shadow: var(--shadow-lg); }
+    .toast.success { background: var(--success); }
+    .toast.danger { background: var(--danger); }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-brand-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    </div>
+    <div class="topbar-brand-name">Velune — Study Materials</div>
+  </div>
+  <a href="./admin.html" class="btn-back">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Dashboard
+  </a>
+</header>
+
+<div class="page">
+  <div class="page-title">Manage Study Materials</div>
+  <p class="page-sub">Upload PDFs or write notes. All VIP students in your centre can access them.</p>
+
+  <div class="info-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>
+      <strong>Who can see these?</strong> Only students with active VIP status. Non-VIP students see an access denied page.
+      All materials are protected with AI camera detection, full-screen watermarking, and screenshot blocking.
+    </div>
+  </div>
+
+  <!-- Upload / Add form -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Add New Material</div>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="matTitle" placeholder="e.g. Chapter 3 — Algebra Notes"/>
+      </div>
+
+      <div class="type-toggle">
+        <button class="type-btn active" id="typeTextBtn" onclick="setType('text')">
+          📝 Text / Notes
+        </button>
+        <button class="type-btn" id="typePdfBtn" onclick="setType('pdf')">
+          📄 PDF Upload
+        </button>
+      </div>
+
+      <!-- Text editor -->
+      <div id="textEditor">
+        <div class="form-group">
+          <label>Content (HTML supported)</label>
+          <textarea id="matContent" placeholder="Write your notes here. You can use HTML like &lt;h2&gt;, &lt;p&gt;, &lt;strong&gt;..."></textarea>
+        </div>
+      </div>
+
+      <!-- PDF upload -->
+      <div id="pdfUploader" style="display:none">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfFileInput').click()">
+          <div class="upload-zone-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="upload-zone-title">Click to upload PDF</div>
+          <div class="upload-zone-sub">PDF files only · Max 20MB</div>
+          <div class="upload-progress" id="uploadProgress">
+            <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+            <div style="margin-top:6px;font-size:0.75rem;color:var(--gray-400)" id="progressText">Uploading...</div>
+          </div>
+        </div>
+        <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="handleFileSelect(this)"/>
+        <div style="margin-top:8px;font-size:0.78rem;color:var(--gray-400)" id="selectedFileName"></div>
+
+        <!-- Alternative: paste a URL -->
+        <div style="margin-top:14px">
+          <div class="form-group">
+            <label>Or paste a PDF URL (Supabase Storage URL, Google Drive, etc.)</label>
+            <input type="text" id="pdfUrl" placeholder="https://..."/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-error" id="addError"></div>
+
+      <button class="btn-primary" onclick="addMaterial()" style="margin-top:8px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Material
+      </button>
+    </div>
+  </div>
+
+  <!-- Existing materials list -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Published Materials</div>
+      <div style="font-size:0.78rem;color:var(--gray-400)" id="matCount">Loading...</div>
+    </div>
+    <div id="matsList">
+      <div class="empty-state">Loading materials...</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="./supabase.js"></script>
+<script>
+let currentUserId = null;
+let materials     = [];
+let currentType   = 'text';
+let selectedFile  = null;
+
+(async function boot() {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session) { window.location.href = './index.html'; return; }
+  currentUserId = session.user.id;
+  await loadMaterials();
+})();
+
+function setType(type) {
+  currentType = type;
+  document.getElementById('textEditor').style.display   = type === 'text' ? 'block' : 'none';
+  document.getElementById('pdfUploader').style.display  = type === 'pdf'  ? 'block' : 'none';
+  document.getElementById('typeTextBtn').classList.toggle('active', type === 'text');
+  document.getElementById('typePdfBtn').classList.toggle('active',  type === 'pdf');
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') { showErr('addError', 'Please select a PDF file.'); return; }
+  if (file.size > 20 * 1024 * 1024)   { showErr('addError', 'File must be under 20MB.'); return; }
+  selectedFile = file;
+  document.getElementById('selectedFileName').textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+}
+
+async function addMaterial() {
+  const title   = document.getElementById('matTitle').value.trim();
+  const errEl   = document.getElementById('addError');
+  errEl.style.display = 'none';
+
+  if (!title) { showErr('addError', 'Title is required.'); return; }
+
+  let content = '';
+
+  if (currentType === 'text') {
+    content = document.getElementById('matContent').value.trim();
+    if (!content) { showErr('addError', 'Please enter content.'); return; }
+  } else {
+    // Try file upload first, then URL
+    if (selectedFile) {
+      const url = await uploadPDF(selectedFile);
+      if (!url) return;
+      content = url;
+    } else {
+      content = document.getElementById('pdfUrl').value.trim();
+      if (!content) { showErr('addError', 'Please upload a PDF or paste a URL.'); return; }
+    }
+  }
+
+  const { error } = await _supabase.from('materials').insert([{
+    owner_id:   currentUserId,
+    title,
+    type:       currentType,
+    content,
+    created_at: new Date().toISOString()
+  }]);
+
+  if (error) { showErr('addError', 'Error saving: ' + error.message); return; }
+
+  showToast('Material added!', 'success');
+  document.getElementById('matTitle').value   = '';
+  document.getElementById('matContent').value = '';
+  document.getElementById('pdfUrl').value     = '';
+  selectedFile = null;
+  document.getElementById('selectedFileName').textContent = '';
+  await loadMaterials();
+}
+
+async function uploadPDF(file) {
+  const progress  = document.getElementById('uploadProgress');
+  const bar       = document.getElementById('progressBar');
+  const text      = document.getElementById('progressText');
+  progress.style.display = 'block';
+  bar.style.width = '30%';
+  text.textContent = 'Uploading...';
+
+  const filePath = `materials/${currentUserId}/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
+
+  const { data, error } = await _supabase.storage
+    .from('materials')
+    .upload(filePath, file, { contentType: 'application/pdf', upsert: false });
+
+  if (error) {
+    progress.style.display = 'none';
+    showErr('addError', 'Upload failed: ' + error.message + '. Make sure you have a "materials" bucket in Supabase Storage.');
+    return null;
+  }
+
+  bar.style.width = '100%';
+  text.textContent = 'Upload complete!';
+  setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 2000);
+
+  // Get public URL
+  const { data: urlData } = _supabase.storage.from('materials').getPublicUrl(filePath);
+  return urlData.publicUrl;
+}
+
+async function loadMaterials() {
+  const { data, error } = await _supabase.from('materials')
+    .select('*').eq('owner_id', currentUserId).order('created_at', { ascending: false });
+
+  materials = data || [];
+  document.getElementById('matCount').textContent = `${materials.length} material${materials.length !== 1 ? 's' : ''}`;
+
+  const list = document.getElementById('matsList');
+  if (!materials.length) {
+    list.innerHTML = '<div class="empty-state">No materials yet. Add one above.</div>';
+    return;
+  }
+  list.innerHTML = materials.map(m => `
+    <div class="mat-item">
+      <div class="mat-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div class="mat-info">
+        <div class="mat-title">${escHtml(m.title)} <span class="mat-badge ${m.type}">${m.type === 'pdf' ? 'PDF' : 'Notes'}</span></div>
+        <div class="mat-meta">Added ${new Date(m.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</div>
+      </div>
+      <button class="btn-danger" onclick="deleteMaterial('${m.id}', '${escAttr(m.title)}')">Delete</button>
+    </div>`).join('');
+}
+
+async function deleteMaterial(id, title) {
+  if (!confirm(`Delete "${title}"?\n\nStudents will immediately lose access to this material.`)) return;
+  const { error } = await _supabase.from('materials').delete().eq('id', id).eq('owner_id', currentUserId);
+  if (error) { showToast('Error: ' + error.message, 'danger'); return; }
+  showToast('Material deleted.', 'success');
+  await loadMaterials();
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s||'').replace(/'/g, "\\'");
+}
+
+function showToast(msg, type = '') {
+  const wrap  = document.getElementById('toastWrap');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  wrap.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 320); }, 3000);
+}
+</script>
+</body>
+</html>
