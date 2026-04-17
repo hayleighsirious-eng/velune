@@ -640,6 +640,48 @@ const spBlock     = document.getElementById('sp-block');
     else { stopNoiseOverlay(); }
   });
 
+  // ─────────────────────────────────────────────────────────
+// MOBILE: Go black instantly on ANY visibility/focus loss
+// Catches power+volume screenshots, home button, app-switch
+// ─────────────────────────────────────────────────────────
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') {
+    // instantly black — no delay, covers the screenshot moment
+    spBlock.style.display = 'block';
+    nukeCanvases();
+    startNoiseOverlay();
+  } else {
+    spBlock.style.display = 'none';
+    stopNoiseOverlay();
+  }
+});
+// pageshow fires on back-navigation (iOS/Android back gesture)
+window.addEventListener('pageshow', function (e) {
+  if (e.persisted) {
+    // page was served from bfcache — re-arm protection
+    spBlock.style.display = 'none';
+    if (detecting) clearBlur();
+  }
+});
+
+// pagehide fires just before the page is hidden/suspended
+window.addEventListener('pagehide', function () {
+  spBlock.style.display = 'block';
+  nukeCanvases();
+});
+// Android: fires when a notification shade or system UI
+// pulls down over the app window (partial visibility loss)
+if ('visualViewport' in window) {
+  window.visualViewport.addEventListener('resize', function () {
+    var ratio = window.visualViewport.height / window.screen.height;
+    if (ratio < 0.75) {
+      // system UI (e.g. notification panel) is covering the app
+      flashBlack(3000);
+      nukeCanvases();
+    }
+  });
+}
+
 })(); // end initScreenProtection
 
 
