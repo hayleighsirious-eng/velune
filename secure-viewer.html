@@ -5,12 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Velune — Secure Study Materials</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <!-- PDF.js for rendering PDFs without allowing download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <!-- TensorFlow + BlazeFace for AI camera detection -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -33,7 +30,6 @@
       background: var(--off-white);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
-      /* Block text selection everywhere */
       -webkit-user-select: none;
       -moz-user-select: none;
       user-select: none;
@@ -52,462 +48,173 @@
       z-index: 200;
       box-shadow: 0 2px 16px rgba(15,31,61,0.25);
     }
-    .topbar-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .topbar-brand-icon {
-      width: 30px;
-      height: 30px;
-      background: linear-gradient(135deg, var(--gold), var(--gold-light));
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .topbar-brand-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 0.95rem;
-      color: white;
-      font-weight: 700;
-    }
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .cam-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 20px;
-      font-size: 0.72rem;
-      color: rgba(255,255,255,0.7);
-      font-weight: 600;
-    }
-    .cam-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--gray-400);
-      transition: background 0.3s;
-    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-brand-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .topbar-brand-name { font-family: 'Playfair Display', serif; font-size: 0.95rem; color: white; font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .cam-indicator { display: flex; align-items: center; gap: 6px; padding: 5px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; font-size: 0.72rem; color: rgba(255,255,255,0.7); font-weight: 600; }
+    .cam-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray-400); transition: background 0.3s; }
     .cam-dot.active { background: #2ecc71; box-shadow: 0 0 6px rgba(46,204,113,0.6); }
     .cam-dot.danger { background: var(--danger); box-shadow: 0 0 6px rgba(192,57,43,0.6); }
-
-    .btn-back {
-      padding: 6px 14px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.8);
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.2s;
-      text-decoration: none;
-    }
+    .btn-back { padding: 6px 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 6px; transition: background 0.2s; text-decoration: none; }
     .btn-back:hover { background: rgba(255,255,255,0.18); color: white; }
 
-    /* ── ACCESS DENIED ── */
-    #access-denied {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: calc(100vh - 56px);
-      padding: 40px 20px;
-      text-align: center;
-    }
-    .denied-icon {
-      width: 80px;
-      height: 80px;
-      background: var(--danger-bg);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .denied-icon svg { stroke: var(--danger); }
-    .denied-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--navy); margin-bottom: 10px; }
-    .denied-sub { font-size: 0.9rem; color: var(--gray-600); max-width: 360px; line-height: 1.6; }
-
-    /* ── LOADING ── */
-    #loading-screen {
+    /* ── CAMERA GATE ── */
+    #camera-gate {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: calc(100vh - 56px);
       gap: 16px;
+      padding: 40px 20px;
+      text-align: center;
     }
-    .spinner-ring {
-      width: 44px; height: 44px;
-      border: 3px solid var(--gray-100);
-      border-top-color: var(--gold);
+    .gate-cam-icon {
+      width: 90px; height: 90px;
+      background: var(--gray-100);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      display: flex; align-items: center; justify-content: center;
+      animation: pulse-cam 2s ease-in-out infinite;
     }
+    @keyframes pulse-cam {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(201,150,12,0); }
+      50% { box-shadow: 0 0 0 14px rgba(201,150,12,0.12); }
+    }
+    .gate-cam-icon.ready { background: rgba(12,122,74,0.1); animation: none; }
+    .gate-cam-icon.error { background: var(--danger-bg); animation: none; }
+    .gate-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); font-weight: 700; }
+    .gate-sub { font-size: 0.88rem; color: var(--gray-400); max-width: 320px; line-height: 1.6; }
+    .gate-progress {
+      width: 280px; height: 6px;
+      background: var(--gray-100);
+      border-radius: 100px; overflow: hidden;
+    }
+    .gate-progress-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      border-radius: 100px;
+      transition: width 0.4s ease;
+    }
+    .gate-step { font-size: 0.78rem; color: var(--gray-400); font-weight: 600; }
+    .gate-error {
+      background: var(--danger-bg);
+      border: 1px solid rgba(192,57,43,0.2);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 0.83rem;
+      color: var(--danger);
+      max-width: 340px;
+      font-weight: 600;
+      line-height: 1.5;
+      display: none;
+    }
+    .gate-retry-btn {
+      padding: 10px 24px;
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      display: none;
+    }
+
+    /* ── ACCESS DENIED ── */
+    #access-denied { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 56px); padding: 40px 20px; text-align: center; }
+    .denied-icon { width: 80px; height: 80px; background: var(--danger-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+    .denied-icon svg { stroke: var(--danger); }
+    .denied-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--navy); margin-bottom: 10px; }
+    .denied-sub { font-size: 0.9rem; color: var(--gray-600); max-width: 360px; line-height: 1.6; }
+
+    /* ── LOADING ── */
+    #loading-screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 56px); gap: 16px; }
+    .spinner-ring { width: 44px; height: 44px; border: 3px solid var(--gray-100); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { font-size: 0.88rem; color: var(--gray-400); font-weight: 500; }
 
     /* ── MAIN CONTENT ── */
-    #viewer-wrap {
-      display: none;
-      position: relative;
-      min-height: calc(100vh - 56px);
-    }
+    #viewer-wrap { display: none; position: relative; min-height: calc(100vh - 56px); }
 
-    /* ── WATERMARK LAYER (fullscreen grid, uncropable) ── */
-    #watermark-layer {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 150;
-      overflow: hidden;
-    }
-    .wm-grid {
-      position: absolute;
-      inset: -100px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, 260px);
-      gap: 60px 40px;
-      transform: rotate(-25deg);
-      transform-origin: center center;
-    }
-    .wm-item {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      opacity: 0.13;
-    }
-    .wm-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--navy);
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-    .wm-id {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--navy);
-      letter-spacing: 0.06em;
-      white-space: nowrap;
-    }
-    .wm-centre {
-      font-size: 9px;
-      color: var(--navy);
-      opacity: 0.7;
-      white-space: nowrap;
-    }
+    /* ── WATERMARK LAYER ── */
+    #watermark-layer { position: fixed; inset: 0; pointer-events: none; z-index: 150; overflow: hidden; }
+    .wm-grid { position: absolute; inset: -100px; display: grid; grid-template-columns: repeat(auto-fill, 260px); gap: 60px 40px; transform: rotate(-25deg); transform-origin: center center; }
+    .wm-item { display: flex; flex-direction: column; gap: 3px; opacity: 0.13; }
+    .wm-name { font-size: 13px; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; white-space: nowrap; }
+    .wm-id { font-size: 10px; font-weight: 600; color: var(--navy); letter-spacing: 0.06em; white-space: nowrap; }
+    .wm-centre { font-size: 9px; color: var(--navy); opacity: 0.7; white-space: nowrap; }
 
-    /* ── CAMERA BLUR OVERLAY ── */
-    #blur-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 500;
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      background: rgba(10, 20, 50, 0.7);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.35s ease;
-    }
-    #blur-overlay.active {
-      opacity: 1;
-      pointer-events: all;
-    }
-    .blur-icon {
-      width: 70px;
-      height: 70px;
-      background: rgba(255,255,255,0.08);
-      border: 1.5px solid rgba(255,255,255,0.15);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    /* ── BLUR OVERLAY ── */
+    #blur-overlay { position: fixed; inset: 0; z-index: 500; backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); background: rgba(10, 20, 50, 0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+    #blur-overlay.active { opacity: 1; pointer-events: all; }
+    .blur-icon { width: 70px; height: 70px; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     .blur-icon svg { stroke: white; }
-    .blur-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: white;
-      text-align: center;
-      max-width: 280px;
-    }
-    .blur-sub {
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.6);
-      text-align: center;
-      max-width: 280px;
-      line-height: 1.5;
-    }
-    .blur-reason-pill {
-      background: rgba(192,57,43,0.25);
-      border: 1px solid rgba(192,57,43,0.4);
-      color: #ff8a80;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 5px 14px;
-      border-radius: 20px;
-      letter-spacing: 0.04em;
+    .blur-title { font-size: 1.1rem; font-weight: 700; color: white; text-align: center; max-width: 280px; }
+    .blur-sub { font-size: 0.82rem; color: rgba(255,255,255,0.6); text-align: center; max-width: 280px; line-height: 1.5; }
+    .blur-reason-pill { background: rgba(192,57,43,0.25); border: 1px solid rgba(192,57,43,0.4); color: #ff8a80; font-size: 0.75rem; font-weight: 700; padding: 5px 14px; border-radius: 20px; letter-spacing: 0.04em; }
+
+    /* ── SCREENSHOT BLOCK OVERLAY ── */
+    #screenshot-block {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000;
+      display: none;
+      pointer-events: none;
     }
 
-    /* ── MATERIAL LIST SIDEBAR ── */
-    #materials-sidebar {
-      width: 260px;
-      background: white;
-      border-right: 1px solid var(--gray-100);
-      position: fixed;
-      top: 56px;
-      left: 0;
-      bottom: 0;
-      overflow-y: auto;
-      z-index: 100;
-      padding: 16px 0;
-    }
-    .sidebar-label {
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--gray-400);
-      padding: 0 16px 10px;
-    }
-    .material-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      cursor: pointer;
-      border-left: 3px solid transparent;
-      transition: all 0.18s;
-    }
+    /* ── SIDEBAR ── */
+    #materials-sidebar { width: 260px; background: white; border-right: 1px solid var(--gray-100); position: fixed; top: 56px; left: 0; bottom: 0; overflow-y: auto; z-index: 100; padding: 16px 0; }
+    .sidebar-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-400); padding: 0 16px 10px; }
+    .material-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.18s; }
     .material-item:hover { background: var(--off-white); }
-    .material-item.active {
-      background: var(--gold-pale);
-      border-left-color: var(--gold);
-    }
-    .material-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--gray-100);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+    .material-item.active { background: var(--gold-pale); border-left-color: var(--gold); }
+    .material-icon { width: 32px; height: 32px; background: var(--gray-100); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .material-item.active .material-icon { background: rgba(201,150,12,0.15); }
     .material-icon svg { stroke: var(--gray-400); }
     .material-item.active .material-icon svg { stroke: var(--gold); }
-    .material-title {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--navy);
-      line-height: 1.3;
-    }
-    .material-type {
-      font-size: 0.7rem;
-      color: var(--gray-400);
-      margin-top: 2px;
-    }
+    .material-title { font-size: 0.82rem; font-weight: 600; color: var(--navy); line-height: 1.3; }
+    .material-type { font-size: 0.7rem; color: var(--gray-400); margin-top: 2px; }
 
-    /* ── PDF / TEXT VIEWER AREA ── */
-    #viewer-area {
-      margin-left: 260px;
-      padding: 24px;
-      min-height: calc(100vh - 56px);
-    }
-    .doc-header {
-      background: white;
-      border-radius: var(--radius-lg);
-      padding: 18px 24px;
-      margin-bottom: 18px;
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .doc-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      color: var(--navy);
-      font-weight: 700;
-    }
-    .doc-meta {
-      font-size: 0.78rem;
-      color: var(--gray-400);
-      margin-top: 3px;
-    }
-    .doc-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .ctrl-btn {
-      padding: 6px 14px;
-      background: var(--off-white);
-      border: 1px solid var(--gray-100);
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--navy);
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: background 0.18s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+    /* ── VIEWER AREA ── */
+    #viewer-area { margin-left: 260px; padding: 24px; min-height: calc(100vh - 56px); }
+    .doc-header { background: white; border-radius: var(--radius-lg); padding: 18px 24px; margin-bottom: 18px; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .doc-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); font-weight: 700; }
+    .doc-meta { font-size: 0.78rem; color: var(--gray-400); margin-top: 3px; }
+    .doc-controls { display: flex; align-items: center; gap: 8px; }
+    .ctrl-btn { padding: 6px 14px; background: var(--off-white); border: 1px solid var(--gray-100); border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: var(--navy); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.18s; display: flex; align-items: center; gap: 6px; }
     .ctrl-btn:hover { background: var(--gray-100); }
     .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .page-counter {
-      font-size: 0.82rem;
-      color: var(--gray-600);
-      font-weight: 600;
-      padding: 0 6px;
-    }
-
-    /* PDF canvas wrapper */
-    #pdf-canvas-wrap {
-      background: white;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      padding: 20px;
-    }
-    #pdf-canvas {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 4px;
-    }
-
-    /* Text content viewer */
-    #text-content-wrap {
-      background: white;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      padding: 32px 40px;
-      line-height: 1.8;
-      font-size: 0.95rem;
-      color: #2C3550;
-      display: none;
-    }
-    #text-content-wrap h1,
-    #text-content-wrap h2,
-    #text-content-wrap h3 {
-      font-family: 'Playfair Display', serif;
-      color: var(--navy);
-      margin: 1.2em 0 0.5em;
-    }
+    .page-counter { font-size: 0.82rem; color: var(--gray-600); font-weight: 600; padding: 0 6px; }
+    #pdf-canvas-wrap { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; display: flex; justify-content: center; padding: 20px; }
+    #pdf-canvas { max-width: 100%; height: auto; display: block; border-radius: 4px; }
+    #text-content-wrap { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 32px 40px; line-height: 1.8; font-size: 0.95rem; color: #2C3550; display: none; }
+    #text-content-wrap h1, #text-content-wrap h2, #text-content-wrap h3 { font-family: 'Playfair Display', serif; color: var(--navy); margin: 1.2em 0 0.5em; }
     #text-content-wrap p { margin-bottom: 1em; }
-
-    /* Empty state */
-    #empty-state {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 400px;
-      gap: 12px;
-      color: var(--gray-400);
-    }
+    #empty-state { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 12px; color: var(--gray-400); }
     #empty-state svg { stroke: var(--gray-100); }
     #empty-state p { font-size: 0.88rem; }
 
-    /* cam preview (tiny, bottom corner) */
-    #cam-preview {
-      position: fixed;
-      bottom: 14px;
-      right: 14px;
-      width: 72px;
-      height: 54px;
-      border-radius: 8px;
-      border: 1.5px solid rgba(255,255,255,0.3);
-      object-fit: cover;
-      transform: scaleX(-1);
-      opacity: 0.25;
-      z-index: 600;
-      display: none;
-    }
+    /* cam preview */
+    #cam-preview { position: fixed; bottom: 14px; right: 14px; width: 72px; height: 54px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.3); object-fit: cover; transform: scaleX(-1); opacity: 0.25; z-index: 600; display: none; }
     #cam-canvas { display: none; }
 
     /* Toast */
-    .toast-wrap {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: center;
-    }
-    .toast {
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 0.83rem;
-      font-weight: 600;
-      color: white;
-      background: var(--navy);
-      box-shadow: var(--shadow-lg);
-      animation: fadeUp 0.3s ease;
-    }
+    .toast-wrap { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+    .toast { padding: 10px 20px; border-radius: 10px; font-size: 0.83rem; font-weight: 600; color: white; background: var(--navy); box-shadow: var(--shadow-lg); animation: fadeUp 0.3s ease; }
     .toast.danger { background: var(--danger); }
     .toast.success { background: var(--success); }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Right-click & print block */
     * { -webkit-print-color-adjust: exact; }
-
-    @media print {
-      body * { display: none !important; }
-      body::after {
-        display: block !important;
-        content: "Printing is disabled for this content.";
-        font-size: 2rem;
-        text-align: center;
-        padding: 40px;
-      }
-    }
-
-    @media (max-width: 768px) {
-      #materials-sidebar {
-        display: none;
-      }
-      #viewer-area {
-        margin-left: 0;
-        padding: 16px;
-      }
-    }
+    @media print { body * { display: none !important; } body::after { display: block !important; content: "Printing is disabled for this content."; font-size: 2rem; text-align: center; padding: 40px; } }
+    @media (max-width: 768px) { #materials-sidebar { display: none; } #viewer-area { margin-left: 0; padding: 16px; } }
   </style>
 </head>
 <body>
+
+<!-- SCREENSHOT BLOCK (flashes black on screenshot attempts) -->
+<div id="screenshot-block"></div>
 
 <!-- TOPBAR -->
 <header class="topbar">
@@ -523,7 +230,7 @@
   <div class="topbar-right">
     <div class="cam-indicator">
       <div class="cam-dot" id="camDot"></div>
-      <span id="camStatus">Camera off</span>
+      <span id="camStatus">Starting camera…</span>
     </div>
     <a href="./student.html" class="btn-back">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -532,31 +239,42 @@
   </div>
 </header>
 
+<!-- CAMERA GATE — shown first, before anything else -->
+<div id="camera-gate">
+  <div class="gate-cam-icon" id="gateCamIcon">
+    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#8E9AB5" stroke-width="1.8" id="gateCamSvg">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 0 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+  </div>
+  <div class="gate-title" id="gateTitle">Enabling Security Camera</div>
+  <div class="gate-sub" id="gateSub">Camera access is required to view secure study materials. Please allow access when prompted.</div>
+  <div class="gate-progress"><div class="gate-progress-bar" id="gateProgressBar"></div></div>
+  <div class="gate-step" id="gateStep">Initialising AI model…</div>
+  <div class="gate-error" id="gateError"></div>
+  <button class="gate-retry-btn" id="gateRetryBtn" onclick="window.location.reload()">Try Again</button>
+</div>
+
 <!-- ACCESS DENIED -->
 <div id="access-denied">
   <div class="denied-icon">
     <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
   </div>
   <div class="denied-title">Access Restricted</div>
-  <p class="denied-sub" id="denied-msg">Study materials are only available to VIP students. Complete your payment to unlock access.</p>
+  <p class="denied-sub" id="denied-msg">Study materials are only available to VIP students.</p>
   <a href="./student.html" style="margin-top:20px;padding:10px 24px;background:var(--navy);color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem">Back to Dashboard</a>
 </div>
 
 <!-- LOADING -->
 <div id="loading-screen">
   <div class="spinner-ring"></div>
-  <div class="loading-text">Verifying access...</div>
+  <div class="loading-text">Verifying access…</div>
 </div>
 
 <!-- MAIN VIEWER -->
 <div id="viewer-wrap">
+  <div id="watermark-layer"><div class="wm-grid" id="wmGrid"></div></div>
 
-  <!-- Watermark layer -->
-  <div id="watermark-layer">
-    <div class="wm-grid" id="wmGrid"></div>
-  </div>
-
-  <!-- Blur overlay (camera security) -->
   <div id="blur-overlay">
     <div class="blur-icon">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -566,7 +284,6 @@
     <div class="blur-sub" id="blurSub">Look directly at the camera to resume viewing</div>
   </div>
 
-  <!-- Sidebar -->
   <aside id="materials-sidebar">
     <div class="sidebar-label">Study Materials</div>
     <div id="materialsList">
@@ -574,7 +291,6 @@
     </div>
   </aside>
 
-  <!-- Viewer area -->
   <div id="viewer-area">
     <div class="doc-header" id="docHeader" style="display:none">
       <div>
@@ -593,13 +309,8 @@
         </button>
       </div>
     </div>
-
-    <div id="pdf-canvas-wrap" style="display:none">
-      <canvas id="pdf-canvas"></canvas>
-    </div>
-
+    <div id="pdf-canvas-wrap" style="display:none"><canvas id="pdf-canvas"></canvas></div>
     <div id="text-content-wrap"></div>
-
     <div id="empty-state" style="display:flex">
       <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <p>Select a material from the sidebar to begin</p>
@@ -607,27 +318,18 @@
   </div>
 </div>
 
-<!-- Camera elements (hidden) -->
 <video id="cam-preview" autoplay playsinline muted></video>
 <canvas id="cam-canvas"></canvas>
-
-<!-- Toast container -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- SUPABASE CONFIG — replace with your actual keys -->
 <script>
 // ============================================================
-// CONFIGURATION — plug your Supabase keys here
+// CONFIGURATION
 // ============================================================
 const SUPABASE_URL  = 'https://cbsoztcgnzhetgalalil.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNic296dGNnbnpoZXRnYWxhbGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzODYzNTQsImV4cCI6MjA5MDk2MjM1NH0.PrdwDAJxSs-ygmIT6ew_TpxvAlHqged1V4mmje15CaI';
 
-// Materials table: create a table called 'materials' in Supabase
-// with columns: id, owner_id, title, type ('pdf'|'text'), content (text/url), created_at
-// To assign materials to students: you can filter by owner_id (all VIP students of that centre see it)
-// Or add a student_ids array column and filter there.
-// ============================================================
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON); // ✅
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // ── State ─────────────────────────────────────────────────────────
@@ -642,35 +344,157 @@ let cameraStream   = null;
 let detecting      = false;
 let blurActive     = false;
 
-const video        = document.getElementById('cam-preview');
-const canvas       = document.getElementById('cam-canvas');
-const blurOverlay  = document.getElementById('blur-overlay');
-const camDot       = document.getElementById('camDot');
-const camStatus    = document.getElementById('camStatus');
+const video       = document.getElementById('cam-preview');
+const canvas      = document.getElementById('cam-canvas');
+const blurOverlay = document.getElementById('blur-overlay');
+const camDot      = document.getElementById('camDot');
+const camStatus   = document.getElementById('camStatus');
 
-// ── Boot ──────────────────────────────────────────────────────────
-(async function boot() {
+// ── Screenshot / Screen-record blocking ───────────────────────────
+(function initScreenshotBlocking() {
+  const block = document.getElementById('screenshot-block');
+
   // Block right-click
   document.addEventListener('contextmenu', e => e.preventDefault());
-  // Block keyboard shortcuts for saving/printing
+
+  // Block keyboard shortcuts
   document.addEventListener('keydown', e => {
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      ['s','p','u','a','c','x','v','j'].includes(e.key.toLowerCase())
-    ) { e.preventDefault(); return false; }
-    if (e.key === 'F12' || e.key === 'PrintScreen') { e.preventDefault(); triggerBlur('Screenshot key detected', 'Security measure triggered'); }
+    const k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && ['s','p','u','a','c','x','v','j'].includes(k)) {
+      e.preventDefault(); return false;
+    }
+    if (e.key === 'F12') { e.preventDefault(); return false; }
+    // PrintScreen — flash black and trigger blur
+    if (e.key === 'PrintScreen' || e.key === 'Print') {
+      e.preventDefault();
+      flashBlack();
+      triggerBlur('Screenshot key detected', 'Security measure triggered');
+      return false;
+    }
+    // Windows Snipping Tool shortcut Win+Shift+S (keydown can't fully block OS-level, but we can react)
+    if (e.shiftKey && e.metaKey && k === 's') { e.preventDefault(); flashBlack(); return false; }
   });
-  // Blur on tab switch / visibility change
+
+  // Visibility change — blur when tab switches (prevents screen recording capture)
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) triggerBlur('Screen hidden', 'Return to this tab to resume');
     else if (detecting) clearBlur();
   });
 
+  // Use Page Visibility + Screen Capture API detection
+  // If screen capture is started, document.hidden briefly flickers or Screen Capture API is active
+  // We can also listen to the 'blur' event on window (user switched app)
+  window.addEventListener('blur', () => {
+    triggerBlur('Window lost focus', 'Return to this window to resume viewing');
+  });
+  window.addEventListener('focus', () => {
+    if (detecting) clearBlur();
+  });
+
+  // CSS-based protection: pointer-events none on content, apply dark filter during print
+  function flashBlack() {
+    block.style.display = 'block';
+    setTimeout(() => { block.style.display = 'none'; }, 400);
+  }
+
+  // Expose flashBlack for use in detectLoop
+  window._flashBlack = flashBlack;
+})();
+
+// ── BOOT: Camera first, then auth ─────────────────────────────────
+// We start camera + AI model loading IMMEDIATELY, in parallel with auth.
+// Content only shows after BOTH are ready.
+
+let cameraInitDone  = false;
+let authInitDone    = false;
+let authResult      = null;  // { studentData, ownerProfile } or { error }
+
+function setGateProgress(pct, step) {
+  document.getElementById('gateProgressBar').style.width = pct + '%';
+  document.getElementById('gateStep').textContent = step;
+}
+
+function showGateError(msg) {
+  const icon = document.getElementById('gateCamIcon');
+  const svg  = document.getElementById('gateCamSvg');
+  icon.className = 'gate-cam-icon error';
+  svg.setAttribute('stroke', 'var(--danger)');
+  document.getElementById('gateTitle').textContent = 'Camera Required';
+  document.getElementById('gateSub').textContent   = '';
+  document.getElementById('gateProgressBar').style.width = '100%';
+  document.getElementById('gateProgressBar').style.background = 'var(--danger)';
+  document.getElementById('gateStep').textContent = '';
+  const errEl = document.getElementById('gateError');
+  errEl.style.display = 'block';
+  errEl.textContent   = msg;
+  document.getElementById('gateRetryBtn').style.display = 'block';
+  camDot.className      = 'cam-dot danger';
+  camStatus.textContent = 'Camera denied';
+}
+
+async function initCameraAndAI() {
+  try {
+    setGateProgress(10, 'Loading AI face detection model…');
+
+    // Load blazeface — use lightweight version for speed
+    faceModel = await blazeface.load();
+    setGateProgress(50, 'Requesting camera access…');
+
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }
+    });
+
+    video.srcObject = cameraStream;
+    setGateProgress(75, 'Starting camera preview…');
+
+    await new Promise((resolve, reject) => {
+      video.onloadedmetadata = resolve;
+      video.onerror = reject;
+      setTimeout(resolve, 3000); // max wait 3s
+    });
+
+    canvas.width  = video.videoWidth  || 320;
+    canvas.height = video.videoHeight || 240;
+
+    // Quick initial face check — user must be visible before proceeding
+    setGateProgress(88, 'Verifying your presence…');
+    const faces = await faceModel.estimateFaces(canvas, false);
+    // We don't fail here if no face yet — detection loop will handle it
+    // We just confirm camera is working
+
+    setGateProgress(100, 'Camera ready!');
+
+    const icon = document.getElementById('gateCamIcon');
+    const svg  = document.getElementById('gateCamSvg');
+    icon.className = 'gate-cam-icon ready';
+    svg.setAttribute('stroke', 'var(--success)');
+    document.getElementById('gateTitle').textContent = 'Camera Active';
+    document.getElementById('gateSub').textContent   = 'Your session is now secured.';
+    document.getElementById('gateStep').textContent  = '';
+    video.style.display = 'block';
+    camDot.className      = 'cam-dot active';
+    camStatus.textContent = 'Secured';
+    detecting = true;
+
+    cameraInitDone = true;
+    checkBothReady();
+  } catch (err) {
+    if (err.name === 'NotAllowedError') {
+      showGateError('Camera access was denied. Camera is required to view secure study materials. Please allow camera access in your browser settings and reload.');
+    } else {
+      showGateError('Could not start camera: ' + (err.message || err.name) + '. Please check your device camera and reload.');
+    }
+  }
+}
+
+async function initAuth() {
   const studentId = localStorage.getItem('zt_student_id');
   const ownerId   = localStorage.getItem('zt_owner_id');
 
   if (!studentId) {
-    showAccessDenied('You are not logged in. Please sign in first.');
+    authResult = { error: 'not_logged_in' };
+    authInitDone = true;
+    checkBothReady();
     return;
   }
 
@@ -681,89 +505,106 @@ const camStatus    = document.getElementById('camStatus');
     ]);
 
     if (stuRes.error || !stuRes.data) {
-      showAccessDenied('Student record not found. Please contact your admin.');
-      return;
+      authResult = { error: 'not_found' };
+    } else {
+      authResult = { studentData: stuRes.data, ownerProfile: profileRes.data || {} };
     }
-
-    studentData  = stuRes.data;
-    ownerProfile = profileRes.data || {};
-
-    const centreName = ownerProfile.centre_name || 'Velune';
-    document.getElementById('centreTitleBar').textContent = centreName;
-    document.title = centreName + ' — Study Materials';
-
-    // ── ACCESS CHECK: must be VIP ──────────────────────────────
-    if (!studentData.vip_active) {
-      showAccessDenied(
-        studentData.balance > 0
-          ? `You have an outstanding balance of ₦${(studentData.balance || 0).toLocaleString()}. Complete your payment to access study materials.`
-          : 'Study materials are only available to VIP students. Please contact your admin.'
-      );
-      return;
-    }
-
-    // VIP confirmed — build watermark
-    buildWatermark(studentData.name, studentData.serial || studentData.login_id || studentData.student_pin, centreName);
-
-    // Load materials
-    await loadMaterials(ownerId);
-
-    // Show viewer
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('viewer-wrap').style.display    = 'block';
-
-    // Start camera security
-    startCameraSecurity();
-
-  } catch (err) {
-    console.error(err);
-    showAccessDenied('Something went wrong. Please try again.');
+  } catch (e) {
+    authResult = { error: 'fetch_error' };
   }
-})();
 
-// ── Access denied ─────────────────────────────────────────────────
-function showAccessDenied(msg) {
-  document.getElementById('loading-screen').style.display  = 'none';
-  document.getElementById('access-denied').style.display   = 'flex';
-  document.getElementById('denied-msg').textContent        = msg;
+  authInitDone = true;
+  checkBothReady();
 }
 
-// ── Watermark builder ─────────────────────────────────────────────
-// Fills the entire screen with a 45-degree rotated grid of student info
-// so ANY crop still contains at least one watermark
+function checkBothReady() {
+  if (!cameraInitDone || !authInitDone) return;
+
+  // Camera is up AND auth result is ready — now decide what to show
+  document.getElementById('camera-gate').style.display = 'none';
+
+  if (authResult.error === 'not_logged_in') {
+    showAccessDenied('You are not logged in. Please sign in first.');
+    return;
+  }
+  if (authResult.error === 'not_found') {
+    showAccessDenied('Student record not found. Please contact your admin.');
+    return;
+  }
+  if (authResult.error) {
+    showAccessDenied('Something went wrong. Please try again.');
+    return;
+  }
+
+  studentData  = authResult.studentData;
+  ownerProfile = authResult.ownerProfile;
+
+  const centreName = ownerProfile.centre_name || 'Velune';
+  document.getElementById('centreTitleBar').textContent = centreName;
+  document.title = centreName + ' — Study Materials';
+
+  if (!studentData.vip_active) {
+    showAccessDenied(
+      studentData.balance > 0
+        ? `You have an outstanding balance of ₦${(studentData.balance || 0).toLocaleString()}. Complete your payment to access study materials.`
+        : 'Study materials are only available to VIP students. Please contact your admin.'
+    );
+    return;
+  }
+
+  // VIP confirmed
+  buildWatermark(
+    studentData.name,
+    studentData.serial || studentData.login_id || studentData.student_pin,
+    centreName
+  );
+
+  loadMaterials(localStorage.getItem('zt_owner_id')).then(() => {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('viewer-wrap').style.display    = 'block';
+    detectLoop();
+  });
+
+  document.getElementById('loading-screen').style.display = 'flex';
+}
+
+// Start both in parallel immediately
+initCameraAndAI();
+initAuth();
+
+// ── Access denied ──────────────────────────────────────────────────
+function showAccessDenied(msg) {
+  document.getElementById('camera-gate').style.display    = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('access-denied').style.display  = 'flex';
+  document.getElementById('denied-msg').textContent       = msg;
+}
+
+// ── Watermark ──────────────────────────────────────────────────────
 function buildWatermark(name, id, centre) {
-  const grid   = document.getElementById('wmGrid');
-  // We generate ~200 items — enough to cover any screen size + rotation
-  const copies = 200;
-  const date   = new Date().toLocaleDateString('en-GB');
+  const grid  = document.getElementById('wmGrid');
+  const date  = new Date().toLocaleDateString('en-GB');
   let html = '';
-  for (let i = 0; i < copies; i++) {
-    html += `
-      <div class="wm-item">
-        <div class="wm-name">${escHtml(name)}</div>
-        <div class="wm-id">ID: ${escHtml(id || '—')} · ${date}</div>
-        <div class="wm-centre">${escHtml(centre)}</div>
-      </div>`;
+  for (let i = 0; i < 200; i++) {
+    html += `<div class="wm-item">
+      <div class="wm-name">${escHtml(name)}</div>
+      <div class="wm-id">ID: ${escHtml(id || '—')} · ${date}</div>
+      <div class="wm-centre">${escHtml(centre)}</div>
+    </div>`;
   }
   grid.innerHTML = html;
 }
 
-// ── Load materials from Supabase ──────────────────────────────────
+// ── Load materials (VIP/secure only) ──────────────────────────────
 async function loadMaterials(ownerId) {
-  // Materials are per-owner (all VIP students of that centre can see them)
-  // You can also add assignment logic by adding student_ids column
-  let query = _supabase.from('materials').select('*').order('created_at', { ascending: false });
+  let query = _supabase.from('materials').select('*')
+    .eq('secure', true)           // Only secure materials for this page
+    .order('created_at', { ascending: false });
   if (ownerId) query = query.eq('owner_id', ownerId);
 
   const { data, error } = await query;
 
-  if (error || !data || !data.length) {
-    // Demo mode — show sample materials so you can see the UI
-    allMaterials = getDemoMaterials();
-  } else {
-    allMaterials = data;
-  }
-
+  allMaterials = (!error && data && data.length) ? data : getDemoMaterials();
   renderMaterialsList();
   if (allMaterials.length) openMaterial(allMaterials[0]);
 }
@@ -775,17 +616,11 @@ function getDemoMaterials() {
       title: 'Chapter 1 — Introduction to Algebra',
       type: 'text',
       content: `<h2>Chapter 1: Introduction to Algebra</h2>
-        <p>Algebra is one of the broad areas of mathematics. In its most general form, algebra is the study of mathematical symbols and the rules for manipulating those symbols. It is a unifying thread of almost all of mathematics.</p>
+        <p>Algebra is one of the broad areas of mathematics. In its most general form, algebra is the study of mathematical symbols and the rules for manipulating those symbols.</p>
         <h3>1.1 Variables and Expressions</h3>
-        <p>A variable is a letter that represents an unknown number. For example, in the expression <strong>2x + 5</strong>, the letter <em>x</em> is the variable. When we know what x is, we can calculate the value of the expression.</p>
-        <p>An algebraic expression is a combination of variables, numbers, and operations. Examples include: 3a + 2b, x² − 4, and 5(y + 3).</p>
+        <p>A variable is a letter that represents an unknown number. For example, in the expression <strong>2x + 5</strong>, the letter <em>x</em> is the variable.</p>
         <h3>1.2 Solving Simple Equations</h3>
-        <p>To solve an equation means to find the value of the variable that makes the equation true. For example, to solve <strong>x + 7 = 12</strong>, we subtract 7 from both sides to get <strong>x = 5</strong>.</p>
-        <p>Always perform the same operation on both sides of the equation. This keeps the equation balanced.</p>
-        <h3>1.3 Practice Questions</h3>
-        <p>1. Solve for x: 3x = 15</p>
-        <p>2. Simplify: 4a + 2a − a</p>
-        <p>3. If y + 8 = 20, find y.</p>`,
+        <p>To solve an equation means to find the value of the variable that makes the equation true. For example, to solve <strong>x + 7 = 12</strong>, we subtract 7 from both sides to get <strong>x = 5</strong>.</p>`,
     },
     {
       id: 'demo-2',
@@ -794,12 +629,7 @@ function getDemoMaterials() {
       content: `<h2>Chapter 2: Organic Chemistry</h2>
         <p>Organic chemistry is the study of the structure, properties, composition, reactions, and preparation of carbon-containing compounds.</p>
         <h3>2.1 Alkanes</h3>
-        <p>Alkanes are saturated hydrocarbons with the general formula <strong>CₙH₂ₙ₊₂</strong>. They are relatively unreactive due to the strength of C–C and C–H sigma bonds. The most common reaction is free radical halogenation under UV light.</p>
-        <h3>2.2 Alkenes</h3>
-        <p>Alkenes contain a C=C double bond and are far more reactive than alkanes. Electrophilic addition is their hallmark reaction. Markovnikov's rule governs where the halogen attaches.</p>
-        <p><strong>Key reaction:</strong> CH₂=CH₂ + HBr → CH₃CH₂Br</p>
-        <h3>2.3 Functional Groups</h3>
-        <p>Functional groups determine the chemical behaviour of organic molecules. Key groups include: hydroxyl (–OH), carbonyl (C=O), carboxyl (–COOH), and amino (–NH₂).</p>`,
+        <p>Alkanes are saturated hydrocarbons with the general formula <strong>CₙH₂ₙ₊₂</strong>. They are relatively unreactive due to the strength of C–C and C–H sigma bonds.</p>`,
     },
   ];
 }
@@ -826,21 +656,16 @@ function renderMaterialsList() {
     </div>`).join('');
 }
 
-// ── Open a material ───────────────────────────────────────────────
 async function openMaterial(mat, id) {
   if (!mat) return;
   currentMat = mat;
-
-  // Update sidebar active state
   document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active'));
   const activeEl = document.getElementById('mat-item-' + (id || mat.id));
   if (activeEl) activeEl.classList.add('active');
-
   document.getElementById('empty-state').style.display      = 'none';
   document.getElementById('docHeader').style.display        = 'flex';
   document.getElementById('docTitle').textContent           = mat.title;
   document.getElementById('docMeta').textContent            = mat.type === 'pdf' ? 'PDF Document' : 'Study Notes · Text';
-
   if (mat.type === 'pdf') {
     document.getElementById('text-content-wrap').style.display = 'none';
     document.getElementById('pdf-canvas-wrap').style.display    = 'flex';
@@ -855,18 +680,13 @@ async function openMaterial(mat, id) {
   }
 }
 
-// ── PDF rendering ─────────────────────────────────────────────────
 async function loadPDF(url) {
   try {
-    // If url is a Supabase storage URL, it will load directly
-    // If it's base64 data, convert accordingly
-    const loadTask = pdfjsLib.getDocument(url);
-    pdfDoc = await loadTask.promise;
+    pdfDoc = await pdfjsLib.getDocument(url).promise;
     currentPage = 1;
     await renderPage(currentPage);
     updatePageCounter();
   } catch (err) {
-    console.error('PDF load error:', err);
     showToast('Could not load PDF. Please contact admin.', 'danger');
   }
 }
@@ -884,74 +704,26 @@ async function renderPage(pageNum) {
 
 function updatePageCounter() {
   if (!pdfDoc) return;
-  document.getElementById('pageCounter').textContent  = `Page ${currentPage} of ${pdfDoc.numPages}`;
-  document.getElementById('prevBtn').disabled          = currentPage <= 1;
-  document.getElementById('nextBtn').disabled          = currentPage >= pdfDoc.numPages;
+  document.getElementById('pageCounter').textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
+  document.getElementById('prevBtn').disabled = currentPage <= 1;
+  document.getElementById('nextBtn').disabled = currentPage >= pdfDoc.numPages;
 }
 
-async function prevPage() {
-  if (!pdfDoc || currentPage <= 1) return;
-  currentPage--;
-  await renderPage(currentPage);
-  updatePageCounter();
-}
+async function prevPage() { if (!pdfDoc || currentPage <= 1) return; currentPage--; await renderPage(currentPage); updatePageCounter(); }
+async function nextPage() { if (!pdfDoc || currentPage >= pdfDoc.numPages) return; currentPage++; await renderPage(currentPage); updatePageCounter(); }
 
-async function nextPage() {
-  if (!pdfDoc || currentPage >= pdfDoc.numPages) return;
-  currentPage++;
-  await renderPage(currentPage);
-  updatePageCounter();
-}
-
-// ── CAMERA SECURITY ───────────────────────────────────────────────
-async function startCameraSecurity() {
-  camDot.className    = 'cam-dot';
-  camStatus.textContent = 'Loading AI...';
-
-  try {
-    faceModel = await blazeface.load();
-    camStatus.textContent = 'Requesting camera...';
-
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: 320, height: 240 }
-    });
-    video.srcObject = cameraStream;
-    video.style.display = 'block';
-
-    video.onloadedmetadata = () => {
-      canvas.width  = video.videoWidth;
-      canvas.height = video.videoHeight;
-      detecting = true;
-      camDot.className    = 'cam-dot active';
-      camStatus.textContent = 'Secured';
-      detectLoop();
-    };
-
-  } catch (err) {
-    if (err.name === 'NotAllowedError') {
-      // Camera denied — lock content completely
-      triggerBlur('Camera access denied', 'Camera access is required to view study materials. Please allow camera access and reload.');
-      camDot.className    = 'cam-dot danger';
-      camStatus.textContent = 'Camera denied';
-    } else {
-      camStatus.textContent = 'Camera error';
-      console.warn('Camera error:', err);
-    }
-  }
-}
-
+// ── FACE DETECTION LOOP ───────────────────────────────────────────
 async function detectLoop() {
   if (!detecting) return;
-
   try {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0);
     const faces = await faceModel.estimateFaces(canvas, false);
-
     if (faces.length === 0) {
       triggerBlur('No face detected', 'Position your face in front of the camera to resume');
     } else if (faces.length > 1) {
       triggerBlur('Multiple faces detected', 'Only the registered student may view this content');
+      if (window._flashBlack) window._flashBlack();
     } else {
       const prob = faces[0].probability ? faces[0].probability[0] : 1;
       if (prob < 0.65) {
@@ -960,10 +732,7 @@ async function detectLoop() {
         clearBlur();
       }
     }
-  } catch (e) {
-    // silent — keep trying
-  }
-
+  } catch (e) { /* silent */ }
   setTimeout(detectLoop, 500);
 }
 
@@ -986,7 +755,7 @@ function clearBlur() {
   camStatus.textContent = 'Secured';
 }
 
-// ── Utilities ─────────────────────────────────────────────────────
+// ── Utilities ──────────────────────────────────────────────────────
 function escHtml(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1001,6 +770,5 @@ function showToast(msg, type = 'info') {
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 320); }, 3500);
 }
 </script>
-
 </body>
 </html>
