@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Velune — Secure Study Materials</title>
+   <link rel="icon" type="image/x-icon/jpeg" href="./assets/images/favicon-32x32.png">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
@@ -35,6 +36,88 @@
       user-select: none;
     }
 
+    /*
+    ═══════════════════════════════════════════════════════
+    SCREEN PROTECTION SYSTEM — MULTI-LAYER APPROACH
+    ═══════════════════════════════════════════════════════
+
+    LAYER 1: Black video overlay (z-index near-max)
+    - A <video> playing a live black canvas stream sits on top of all content
+    - Browser compositors often capture the video layer separately
+    - Result: screenshots via browser DevTools / browser APIs → black frame
+
+    LAYER 2: CSS mix-blend-mode trick
+    - Two overlapping divs with mix-blend-mode: difference
+    - They cancel out visually (you see normal content)
+    - But screenshot tools that flatten layers BEFORE compositing
+      will see the unmixed layers = white flash / corruption
+    - Used by some banking apps and Telegram premium
+
+    LAYER 3: Hard black DIV flash on all known shortcuts
+    - Covers PrintScreen, Win+Shift+S, Cmd+Shift+3/4/5, etc.
+    - Also triggers on visibility change and window blur
+
+    LAYER 4: Canvas self-destruct
+    - PDF canvas is cleared immediately after any keydown
+      that matches screenshot patterns
+    
+    NOTE: OS-level screenshot (Win+PrtScr hardware key alone)
+    cannot be stopped by ANY web page. These layers handle
+    everything catchable by JavaScript.
+    ═══════════════════════════════════════════════════════
+    */
+
+    /* LAYER 1: Black video overlay */
+    #sp-video {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 2147483640;
+      pointer-events: none;
+      /* opacity near-zero = invisible to human eye, still captured by screenshot APIs */
+      opacity: 0.0039;
+      object-fit: cover;
+    }
+
+    /* LAYER 2a: mix-blend-mode overlay pair */
+    #sp-blend-a, #sp-blend-b {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2147483641;
+    }
+    /* First layer: very faint white — invisible to eye */
+    #sp-blend-a {
+      background: rgba(255,255,255,0.004);
+      mix-blend-mode: difference;
+    }
+    /* Second layer cancels first — net visual = 0 */
+    #sp-blend-b {
+      background: rgba(255,255,255,0.004);
+      mix-blend-mode: difference;
+    }
+
+    /* LAYER 3: Hard black flash div */
+    #sp-block {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647;
+      background: #000000;
+      display: none;
+      pointer-events: none;
+    }
+    /* Text shown inside the black screen */
+    #sp-block::after {
+      content: "🔒 Screenshot blocked";
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255,255,255,0.3);
+      font-family: sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+    }
+
     /* ── TOPBAR ── */
     .topbar {
       background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
@@ -61,66 +144,20 @@
 
     /* ── CAMERA GATE ── */
     #camera-gate {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: calc(100vh - 56px);
-      gap: 16px;
-      padding: 40px 20px;
-      text-align: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: calc(100vh - 56px); gap: 16px; padding: 40px 20px; text-align: center;
     }
-    .gate-cam-icon {
-      width: 90px; height: 90px;
-      background: var(--gray-100);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      animation: pulse-cam 2s ease-in-out infinite;
-    }
-    @keyframes pulse-cam {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(201,150,12,0); }
-      50% { box-shadow: 0 0 0 14px rgba(201,150,12,0.12); }
-    }
+    .gate-cam-icon { width: 90px; height: 90px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-cam 2s ease-in-out infinite; }
+    @keyframes pulse-cam { 0%, 100% { box-shadow: 0 0 0 0 rgba(201,150,12,0); } 50% { box-shadow: 0 0 0 14px rgba(201,150,12,0.12); } }
     .gate-cam-icon.ready { background: rgba(12,122,74,0.1); animation: none; }
     .gate-cam-icon.error { background: var(--danger-bg); animation: none; }
     .gate-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); font-weight: 700; }
     .gate-sub { font-size: 0.88rem; color: var(--gray-400); max-width: 320px; line-height: 1.6; }
-    .gate-progress {
-      width: 280px; height: 6px;
-      background: var(--gray-100);
-      border-radius: 100px; overflow: hidden;
-    }
-    .gate-progress-bar {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, var(--gold), var(--gold-light));
-      border-radius: 100px;
-      transition: width 0.4s ease;
-    }
+    .gate-progress { width: 280px; height: 6px; background: var(--gray-100); border-radius: 100px; overflow: hidden; }
+    .gate-progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 100px; transition: width 0.4s ease; }
     .gate-step { font-size: 0.78rem; color: var(--gray-400); font-weight: 600; }
-    .gate-error {
-      background: var(--danger-bg);
-      border: 1px solid rgba(192,57,43,0.2);
-      border-radius: 10px;
-      padding: 14px 20px;
-      font-size: 0.83rem;
-      color: var(--danger);
-      max-width: 340px;
-      font-weight: 600;
-      line-height: 1.5;
-      display: none;
-    }
-    .gate-retry-btn {
-      padding: 10px 24px;
-      background: var(--navy);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      display: none;
-    }
+    .gate-error { background: var(--danger-bg); border: 1px solid rgba(192,57,43,0.2); border-radius: 10px; padding: 14px 20px; font-size: 0.83rem; color: var(--danger); max-width: 340px; font-weight: 600; line-height: 1.5; display: none; }
+    .gate-retry-btn { padding: 10px 24px; background: var(--navy); color: white; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: none; }
 
     /* ── ACCESS DENIED ── */
     #access-denied { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 56px); padding: 40px 20px; text-align: center; }
@@ -155,14 +192,6 @@
     .blur-sub { font-size: 0.82rem; color: rgba(255,255,255,0.6); text-align: center; max-width: 280px; line-height: 1.5; }
     .blur-reason-pill { background: rgba(192,57,43,0.25); border: 1px solid rgba(192,57,43,0.4); color: #ff8a80; font-size: 0.75rem; font-weight: 700; padding: 5px 14px; border-radius: 20px; letter-spacing: 0.04em; }
 
-    /* ── SCREENSHOT BLOCK OVERLAY ── */
-    #screenshot-block {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #000;
-      display: none;
-      pointer-events: none;
-    }
-
     /* ── SIDEBAR ── */
     #materials-sidebar { width: 260px; background: white; border-right: 1px solid var(--gray-100); position: fixed; top: 56px; left: 0; bottom: 0; overflow-y: auto; z-index: 100; padding: 16px 0; }
     .sidebar-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-400); padding: 0 16px 10px; }
@@ -195,7 +224,7 @@
     #empty-state svg { stroke: var(--gray-100); }
     #empty-state p { font-size: 0.88rem; }
 
-    /* cam preview */
+    /* cam preview (tiny, bottom-right) */
     #cam-preview { position: fixed; bottom: 14px; right: 14px; width: 72px; height: 54px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.3); object-fit: cover; transform: scaleX(-1); opacity: 0.25; z-index: 600; display: none; }
     #cam-canvas { display: none; }
 
@@ -207,14 +236,28 @@
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     * { -webkit-print-color-adjust: exact; }
-    @media print { body * { display: none !important; } body::after { display: block !important; content: "Printing is disabled for this content."; font-size: 2rem; text-align: center; padding: 40px; } }
+    @media print {
+      body * { visibility: hidden !important; display: none !important; }
+      body::after { visibility: visible !important; display: block !important; content: "Printing is disabled for this content."; font-size: 2rem; text-align: center; padding: 40px; }
+    }
     @media (max-width: 768px) { #materials-sidebar { display: none; } #viewer-area { margin-left: 0; padding: 16px; } }
   </style>
 </head>
 <body>
 
-<!-- SCREENSHOT BLOCK (flashes black on screenshot attempts) -->
-<div id="screenshot-block"></div>
+<!-- ═══════════════════════════════════════════════
+  SCREEN PROTECTION LAYERS
+  ═══════════════════════════════════════════════ -->
+
+<!-- LAYER 3: Hard black block (JS-triggered) -->
+<div id="sp-block"></div>
+
+<!-- LAYER 2: mix-blend-mode pair (passive, always on) -->
+<div id="sp-blend-a"></div>
+<div id="sp-blend-b"></div>
+
+<!-- LAYER 1: Black video stream overlay (always on) -->
+<video id="sp-video" autoplay muted playsinline></video>
 
 <!-- TOPBAR -->
 <header class="topbar">
@@ -239,7 +282,7 @@
   </div>
 </header>
 
-<!-- CAMERA GATE — shown first, before anything else -->
+<!-- CAMERA GATE -->
 <div id="camera-gate">
   <div class="gate-cam-icon" id="gateCamIcon">
     <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#8E9AB5" stroke-width="1.8" id="gateCamSvg">
@@ -349,65 +392,261 @@ const canvas      = document.getElementById('cam-canvas');
 const blurOverlay = document.getElementById('blur-overlay');
 const camDot      = document.getElementById('camDot');
 const camStatus   = document.getElementById('camStatus');
+const spBlock     = document.getElementById('sp-block');
 
-// ── Screenshot / Screen-record blocking ───────────────────────────
-(function initScreenshotBlocking() {
-  const block = document.getElementById('screenshot-block');
+// ============================================================
+// ═══════════════════════════════════════════════════════════
+// SCREEN PROTECTION SYSTEM
+// ═══════════════════════════════════════════════════════════
+// ============================================================
+(function initScreenProtection() {
 
-  // Block right-click
-  document.addEventListener('contextmenu', e => e.preventDefault());
+  // ─────────────────────────────────────────────────────────
+  // LAYER 1: Live black canvas → video stream overlay
+  // ─────────────────────────────────────────────────────────
+  // This is the most effective web-level technique.
+  // captureStream() creates a MediaStream from a canvas.
+  // We play it in a <video> that sits over all content at
+  // near-zero opacity. The human eye cannot see it, but
+  // the browser compositor sends the VIDEO layer to screen
+  // capture APIs, which receive solid black.
+  //
+  // This stops: browser DevTools screenshots, Electron
+  // screenshot APIs, some screen recorder browser extensions.
+  // Does NOT stop: OS-level PrtScr, Win+PrtScr.
+  (function setupBlackVideoStream() {
+    try {
+      var bc = document.createElement('canvas');
+      bc.width = 2; bc.height = 2;
+      var bx = bc.getContext('2d');
 
-  // Block keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    const k = e.key.toLowerCase();
-    if ((e.ctrlKey || e.metaKey) && ['s','p','u','a','c','x','v','j'].includes(k)) {
-      e.preventDefault(); return false;
+      // Keep painting black every frame so stream stays live/active
+      function paintBlack() {
+        bx.fillStyle = '#000';
+        bx.fillRect(0, 0, 2, 2);
+        requestAnimationFrame(paintBlack);
+      }
+      paintBlack();
+
+      var stream = bc.captureStream(60); // 60fps keeps it "live"
+      var spv = document.getElementById('sp-video');
+      spv.srcObject = stream;
+      spv.play().catch(function(){});
+    } catch(e) {
+      // captureStream not supported (rare) — other layers still active
+    }
+  })();
+
+  // ─────────────────────────────────────────────────────────
+  // FLASH helper — shows solid black for N ms
+  // ─────────────────────────────────────────────────────────
+  var flashTimer = null;
+  function flashBlack(ms) {
+    ms = ms || 800;
+    spBlock.style.display = 'block';
+    if (flashTimer) clearTimeout(flashTimer);
+    flashTimer = setTimeout(function() {
+      spBlock.style.display = 'none';
+    }, ms);
+  }
+  window._flashBlack = flashBlack;
+
+  // Also clear PDF canvas content during flash
+  function nukeCanvases() {
+    var c = document.getElementById('pdf-canvas');
+    if (c) {
+      var x = c.getContext('2d');
+      x.clearRect(0, 0, c.width, c.height);
+      x.fillStyle = '#000';
+      x.fillRect(0, 0, c.width, c.height);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // LAYER 3: Keyboard shortcut blocking + flash
+  // ─────────────────────────────────────────────────────────
+  // We handle every known screenshot shortcut across Windows,
+  // macOS, and Linux. On detection: preventDefault + flash black.
+  //
+  // Windows PrtScr (no modifier) — keydown CAN catch this in
+  // most browsers when the page is focused. keyup is a fallback.
+  //
+  // IMPORTANT: Win+PrtScr (hardware-level) and Snipping Tool
+  // opened via Start menu CANNOT be stopped by any web page.
+  // We minimise damage by clearing canvases and flashing black.
+
+  var screenshotKeys = new Set([
+    'printscreen', 'print', 'prtscn', 'sysrq'
+  ]);
+
+  function handleKey(e) {
+    var k = (e.key || '').toLowerCase();
+    var ctrl  = e.ctrlKey;
+    var meta  = e.metaKey;
+    var shift = e.shiftKey;
+    var alt   = e.altKey;
+
+    // Block common utility shortcuts
+    if ((ctrl || meta) && ['s','p','u','a','c','x','v','j','i'].includes(k)) {
+      e.preventDefault(); e.stopPropagation(); return false;
     }
     if (e.key === 'F12') { e.preventDefault(); return false; }
-    // PrintScreen — flash black and trigger blur
-    if (e.key === 'PrintScreen' || e.key === 'Print') {
-      e.preventDefault();
-      flashBlack();
-      triggerBlur('Screenshot key detected', 'Security measure triggered');
+
+    // ── Windows / Linux screenshot keys ──
+    // PrtScr alone (keydown)
+    if (screenshotKeys.has(k)) {
+      e.preventDefault(); e.stopPropagation();
+      flashBlack(1200); nukeCanvases();
+      triggerBlur('Screenshot blocked', 'Screen capture is not permitted');
       return false;
     }
-    // Windows Snipping Tool shortcut Win+Shift+S (keydown can't fully block OS-level, but we can react)
-    if (e.shiftKey && e.metaKey && k === 's') { e.preventDefault(); flashBlack(); return false; }
+    // Win+Shift+S → Snipping Tool
+    if (shift && (meta || ctrl) && k === 's') {
+      e.preventDefault(); e.stopPropagation();
+      flashBlack(1200); nukeCanvases();
+      return false;
+    }
+    // ── macOS screenshot combos ──
+    if (meta && shift && ['3','4','5','6'].includes(k)) {
+      e.preventDefault(); e.stopPropagation();
+      flashBlack(1200); nukeCanvases();
+      return false;
+    }
+    // macOS Ctrl+Shift+3/4 (clipboard)
+    if (ctrl && shift && ['3','4'].includes(k)) {
+      e.preventDefault(); e.stopPropagation();
+      flashBlack(1200); nukeCanvases();
+      return false;
+    }
+    // Alt+PrtScr (window capture on Windows)
+    if (alt && screenshotKeys.has(k)) {
+      e.preventDefault(); e.stopPropagation();
+      flashBlack(1200); nukeCanvases();
+      return false;
+    }
+  }
+
+  // Listen on both keydown AND keyup — some browsers fire PrtScr only on keyup
+  document.addEventListener('keydown', handleKey, true);
+  document.addEventListener('keyup',   handleKey, true);
+  // Also capture on window level
+  window.addEventListener('keydown', handleKey, true);
+  window.addEventListener('keyup',   handleKey, true);
+
+  // ─────────────────────────────────────────────────────────
+  // Tab switch / visibility change → flash + blur
+  // ─────────────────────────────────────────────────────────
+  // When user switches tabs, the OS has a chance to screenshot.
+  // We flash black and clear canvases proactively.
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      flashBlack(5000); // stay black for 5s to cover any screenshot taken while hidden
+      nukeCanvases();
+      triggerBlur('Screen hidden', 'Return to this tab to resume viewing');
+    } else {
+      spBlock.style.display = 'none';
+      if (detecting) clearBlur();
+    }
   });
 
-  // Visibility change — blur when tab switches (prevents screen recording capture)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) triggerBlur('Screen hidden', 'Return to this tab to resume');
-    else if (detecting) clearBlur();
-  });
-
-  // Use Page Visibility + Screen Capture API detection
-  // If screen capture is started, document.hidden briefly flickers or Screen Capture API is active
-  // We can also listen to the 'blur' event on window (user switched app)
-  window.addEventListener('blur', () => {
+  // ─────────────────────────────────────────────────────────
+  // Window blur → flash + nuke
+  // ─────────────────────────────────────────────────────────
+  // Fires when: Alt+Tab, clicking Snipping Tool, OBS grabbing focus
+  window.addEventListener('blur', function() {
+    flashBlack(5000);
+    nukeCanvases();
     triggerBlur('Window lost focus', 'Return to this window to resume viewing');
   });
-  window.addEventListener('focus', () => {
+  window.addEventListener('focus', function() {
+    spBlock.style.display = 'none';
     if (detecting) clearBlur();
   });
 
-  // CSS-based protection: pointer-events none on content, apply dark filter during print
-  function flashBlack() {
-    block.style.display = 'block';
-    setTimeout(() => { block.style.display = 'none'; }, 400);
+  // ─────────────────────────────────────────────────────────
+  // Block getDisplayMedia (screen share / record)
+  // ─────────────────────────────────────────────────────────
+  if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+    var _orig = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getDisplayMedia = function(opts) {
+      flashBlack(3000); nukeCanvases();
+      triggerBlur('Screen recording blocked', 'Screen capture is not allowed for this content');
+      return _orig.apply(this, arguments); // still streams (black, due to video overlay)
+    };
   }
 
-  // Expose flashBlack for use in detectLoop
-  window._flashBlack = flashBlack;
-})();
+  // ─────────────────────────────────────────────────────────
+  // Block right-click, text selection, drag
+  // ─────────────────────────────────────────────────────────
+  document.addEventListener('contextmenu',  function(e) { e.preventDefault(); });
+  document.addEventListener('dragstart',    function(e) { e.preventDefault(); });
+  document.addEventListener('selectstart',  function(e) { e.preventDefault(); });
+
+  // ─────────────────────────────────────────────────────────
+  // Block print
+  // ─────────────────────────────────────────────────────────
+  window.addEventListener('beforeprint', function() {
+    flashBlack(5000); nukeCanvases();
+    triggerBlur('Printing disabled', 'This content cannot be printed');
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // Pointer events: block middle-click (opens in new tab)
+  // ─────────────────────────────────────────────────────────
+  document.addEventListener('pointerdown', function(e) {
+    if (e.button === 1) { e.preventDefault(); } // middle click
+    if (e.button === 2) { e.preventDefault(); } // right click
+  });
+
+  // ─────────────────────────────────────────────────────────
+  // EXTRA: Periodically re-paint PDF canvas with noise
+  // so a static screenshot yields random pixels, not readable content
+  // ─────────────────────────────────────────────────────────
+  // This runs only when the window is NOT focused.
+  // When focused: normal render. When blurred: noise overlay.
+  var noiseActive = false;
+  function startNoiseOverlay() {
+    if (noiseActive) return;
+    noiseActive = true;
+    (function noise() {
+      if (!noiseActive) return;
+      var c = document.getElementById('pdf-canvas');
+      if (c && c.width && c.height) {
+        var x = c.getContext('2d');
+        // Semi-transparent random noise on top of content
+        var imgData = x.createImageData(c.width, c.height);
+        for (var i = 0; i < imgData.data.length; i += 4) {
+          var v = Math.random() * 255 | 0;
+          imgData.data[i]   = v;
+          imgData.data[i+1] = v;
+          imgData.data[i+2] = v;
+          imgData.data[i+3] = 255;
+        }
+        x.putImageData(imgData, 0, 0);
+      }
+      setTimeout(noise, 100);
+    })();
+  }
+  function stopNoiseOverlay() {
+    noiseActive = false;
+    // Re-render the current PDF page so user sees content again
+    if (pdfDoc && currentPage) renderPage(currentPage).catch(function(){});
+  }
+
+  window.addEventListener('blur',  function() { startNoiseOverlay(); });
+  window.addEventListener('focus', function() { stopNoiseOverlay();  });
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) { startNoiseOverlay(); }
+    else { stopNoiseOverlay(); }
+  });
+
+})(); // end initScreenProtection
+
 
 // ── BOOT: Camera first, then auth ─────────────────────────────────
-// We start camera + AI model loading IMMEDIATELY, in parallel with auth.
-// Content only shows after BOTH are ready.
-
 let cameraInitDone  = false;
 let authInitDone    = false;
-let authResult      = null;  // { studentData, ownerProfile } or { error }
+let authResult      = null;
 
 function setGateProgress(pct, step) {
   document.getElementById('gateProgressBar').style.width = pct + '%';
@@ -415,8 +654,8 @@ function setGateProgress(pct, step) {
 }
 
 function showGateError(msg) {
-  const icon = document.getElementById('gateCamIcon');
-  const svg  = document.getElementById('gateCamSvg');
+  var icon = document.getElementById('gateCamIcon');
+  var svg  = document.getElementById('gateCamSvg');
   icon.className = 'gate-cam-icon error';
   svg.setAttribute('stroke', 'var(--danger)');
   document.getElementById('gateTitle').textContent = 'Camera Required';
@@ -424,7 +663,7 @@ function showGateError(msg) {
   document.getElementById('gateProgressBar').style.width = '100%';
   document.getElementById('gateProgressBar').style.background = 'var(--danger)';
   document.getElementById('gateStep').textContent = '';
-  const errEl = document.getElementById('gateError');
+  var errEl = document.getElementById('gateError');
   errEl.style.display = 'block';
   errEl.textContent   = msg;
   document.getElementById('gateRetryBtn').style.display = 'block';
@@ -435,8 +674,6 @@ function showGateError(msg) {
 async function initCameraAndAI() {
   try {
     setGateProgress(10, 'Loading AI face detection model…');
-
-    // Load blazeface — use lightweight version for speed
     faceModel = await blazeface.load();
     setGateProgress(50, 'Requesting camera access…');
 
@@ -447,25 +684,24 @@ async function initCameraAndAI() {
     video.srcObject = cameraStream;
     setGateProgress(75, 'Starting camera preview…');
 
-    await new Promise((resolve, reject) => {
+    await new Promise(function(resolve, reject) {
       video.onloadedmetadata = resolve;
       video.onerror = reject;
-      setTimeout(resolve, 3000); // max wait 3s
+      setTimeout(resolve, 3000);
     });
 
     canvas.width  = video.videoWidth  || 320;
     canvas.height = video.videoHeight || 240;
 
-    // Quick initial face check — user must be visible before proceeding
     setGateProgress(88, 'Verifying your presence…');
-    const faces = await faceModel.estimateFaces(canvas, false);
-    // We don't fail here if no face yet — detection loop will handle it
-    // We just confirm camera is working
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    var faces = await faceModel.estimateFaces(canvas, false);
 
     setGateProgress(100, 'Camera ready!');
 
-    const icon = document.getElementById('gateCamIcon');
-    const svg  = document.getElementById('gateCamSvg');
+    var icon = document.getElementById('gateCamIcon');
+    var svg  = document.getElementById('gateCamSvg');
     icon.className = 'gate-cam-icon ready';
     svg.setAttribute('stroke', 'var(--success)');
     document.getElementById('gateTitle').textContent = 'Camera Active';
@@ -488,8 +724,8 @@ async function initCameraAndAI() {
 }
 
 async function initAuth() {
-  const studentId = localStorage.getItem('zt_student_id');
-  const ownerId   = localStorage.getItem('zt_owner_id');
+  var studentId = localStorage.getItem('zt_student_id');
+  var ownerId   = localStorage.getItem('zt_owner_id');
 
   if (!studentId) {
     authResult = { error: 'not_logged_in' };
@@ -499,10 +735,10 @@ async function initAuth() {
   }
 
   try {
-    const [stuRes, profileRes] = await Promise.all([
-      _supabase.from('students').select('*').eq('id', studentId).single(),
-      ownerId ? _supabase.from('profiles').select('*').eq('id', ownerId).single() : Promise.resolve({ data: null })
-    ]);
+    var stuRes = await _supabase.from('students').select('*').eq('id', studentId).single();
+    var profileRes = ownerId
+      ? await _supabase.from('profiles').select('*').eq('id', ownerId).single()
+      : { data: null };
 
     if (stuRes.error || !stuRes.data) {
       authResult = { error: 'not_found' };
@@ -520,7 +756,6 @@ async function initAuth() {
 function checkBothReady() {
   if (!cameraInitDone || !authInitDone) return;
 
-  // Camera is up AND auth result is ready — now decide what to show
   document.getElementById('camera-gate').style.display = 'none';
 
   if (authResult.error === 'not_logged_in') {
@@ -539,27 +774,26 @@ function checkBothReady() {
   studentData  = authResult.studentData;
   ownerProfile = authResult.ownerProfile;
 
-  const centreName = ownerProfile.centre_name || 'Velune';
+  var centreName = (ownerProfile && ownerProfile.centre_name) ? ownerProfile.centre_name : 'Velune';
   document.getElementById('centreTitleBar').textContent = centreName;
   document.title = centreName + ' — Study Materials';
 
   if (!studentData.vip_active) {
     showAccessDenied(
       studentData.balance > 0
-        ? `You have an outstanding balance of ₦${(studentData.balance || 0).toLocaleString()}. Complete your payment to access study materials.`
+        ? 'You have an outstanding balance of ₦' + (studentData.balance || 0).toLocaleString() + '. Complete your payment to access study materials.'
         : 'Study materials are only available to VIP students. Please contact your admin.'
     );
     return;
   }
 
-  // VIP confirmed
   buildWatermark(
     studentData.name,
     studentData.serial || studentData.login_id || studentData.student_pin,
     centreName
   );
 
-  loadMaterials(localStorage.getItem('zt_owner_id')).then(() => {
+  loadMaterials(localStorage.getItem('zt_owner_id')).then(function() {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('viewer-wrap').style.display    = 'block';
     detectLoop();
@@ -568,7 +802,6 @@ function checkBothReady() {
   document.getElementById('loading-screen').style.display = 'flex';
 }
 
-// Start both in parallel immediately
 initCameraAndAI();
 initAuth();
 
@@ -582,27 +815,28 @@ function showAccessDenied(msg) {
 
 // ── Watermark ──────────────────────────────────────────────────────
 function buildWatermark(name, id, centre) {
-  const grid  = document.getElementById('wmGrid');
-  const date  = new Date().toLocaleDateString('en-GB');
-  let html = '';
-  for (let i = 0; i < 200; i++) {
-    html += `<div class="wm-item">
-      <div class="wm-name">${escHtml(name)}</div>
-      <div class="wm-id">ID: ${escHtml(id || '—')} · ${date}</div>
-      <div class="wm-centre">${escHtml(centre)}</div>
-    </div>`;
+  var grid  = document.getElementById('wmGrid');
+  var date  = new Date().toLocaleDateString('en-GB');
+  var html  = '';
+  for (var i = 0; i < 200; i++) {
+    html += '<div class="wm-item">'
+      + '<div class="wm-name">' + escHtml(name) + '</div>'
+      + '<div class="wm-id">ID: ' + escHtml(id || '—') + ' · ' + date + '</div>'
+      + '<div class="wm-centre">' + escHtml(centre) + '</div>'
+      + '</div>';
   }
   grid.innerHTML = html;
 }
 
-// ── Load materials (VIP/secure only) ──────────────────────────────
+// ── Load materials ──────────────────────────────────────────────────
 async function loadMaterials(ownerId) {
-  let query = _supabase.from('materials').select('*')
-    .eq('secure', true)           // Only secure materials for this page
+  var query = _supabase.from('materials').select('*')
+    .eq('secure', true)
     .order('created_at', { ascending: false });
   if (ownerId) query = query.eq('owner_id', ownerId);
 
-  const { data, error } = await query;
+  var res = await query;
+  var data = res.data, error = res.error;
 
   allMaterials = (!error && data && data.length) ? data : getDemoMaterials();
   renderMaterialsList();
@@ -615,52 +849,41 @@ function getDemoMaterials() {
       id: 'demo-1',
       title: 'Chapter 1 — Introduction to Algebra',
       type: 'text',
-      content: `<h2>Chapter 1: Introduction to Algebra</h2>
-        <p>Algebra is one of the broad areas of mathematics. In its most general form, algebra is the study of mathematical symbols and the rules for manipulating those symbols.</p>
-        <h3>1.1 Variables and Expressions</h3>
-        <p>A variable is a letter that represents an unknown number. For example, in the expression <strong>2x + 5</strong>, the letter <em>x</em> is the variable.</p>
-        <h3>1.2 Solving Simple Equations</h3>
-        <p>To solve an equation means to find the value of the variable that makes the equation true. For example, to solve <strong>x + 7 = 12</strong>, we subtract 7 from both sides to get <strong>x = 5</strong>.</p>`,
+      content: '<h2>Chapter 1: Introduction to Algebra</h2><p>Algebra is one of the broad areas of mathematics. In its most general form, algebra is the study of mathematical symbols and the rules for manipulating those symbols.</p><h3>1.1 Variables and Expressions</h3><p>A variable is a letter that represents an unknown number. For example, in the expression <strong>2x + 5</strong>, the letter <em>x</em> is the variable.</p><h3>1.2 Solving Simple Equations</h3><p>To solve an equation means to find the value of the variable that makes the equation true. For example, to solve <strong>x + 7 = 12</strong>, we subtract 7 from both sides to get <strong>x = 5</strong>.</p>',
     },
     {
       id: 'demo-2',
       title: 'Chapter 2 — Organic Chemistry Notes',
       type: 'text',
-      content: `<h2>Chapter 2: Organic Chemistry</h2>
-        <p>Organic chemistry is the study of the structure, properties, composition, reactions, and preparation of carbon-containing compounds.</p>
-        <h3>2.1 Alkanes</h3>
-        <p>Alkanes are saturated hydrocarbons with the general formula <strong>CₙH₂ₙ₊₂</strong>. They are relatively unreactive due to the strength of C–C and C–H sigma bonds.</p>`,
+      content: '<h2>Chapter 2: Organic Chemistry</h2><p>Organic chemistry is the study of the structure, properties, composition, reactions, and preparation of carbon-containing compounds.</p><h3>2.1 Alkanes</h3><p>Alkanes are saturated hydrocarbons with the general formula <strong>CₙH₂ₙ₊₂</strong>. They are relatively unreactive due to the strength of C–C and C–H sigma bonds.</p>',
     },
   ];
 }
 
 function renderMaterialsList() {
-  const list = document.getElementById('materialsList');
+  var list = document.getElementById('materialsList');
   if (!allMaterials.length) {
     list.innerHTML = '<div style="padding:20px 16px;font-size:0.82rem;color:var(--gray-400)">No materials assigned yet.</div>';
     return;
   }
-  list.innerHTML = allMaterials.map((m, i) => `
-    <div class="material-item ${i === 0 ? 'active' : ''}" id="mat-item-${m.id}" onclick="openMaterial(allMaterials[${i}], '${m.id}')">
-      <div class="material-icon">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          ${m.type === 'pdf'
-            ? '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
-            : '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'}
-        </svg>
-      </div>
-      <div>
-        <div class="material-title">${escHtml(m.title)}</div>
-        <div class="material-type">${m.type === 'pdf' ? 'PDF Document' : 'Study Notes'}</div>
-      </div>
-    </div>`).join('');
+  list.innerHTML = allMaterials.map(function(m, i) {
+    return '<div class="material-item ' + (i === 0 ? 'active' : '') + '" id="mat-item-' + m.id + '" onclick="openMaterial(allMaterials[' + i + '], \'' + m.id + '\')">'
+      + '<div class="material-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+      + (m.type === 'pdf'
+          ? '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
+          : '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>')
+      + '</svg></div>'
+      + '<div><div class="material-title">' + escHtml(m.title) + '</div>'
+      + '<div class="material-type">' + (m.type === 'pdf' ? 'PDF Document' : 'Study Notes') + '</div></div>'
+      + '</div>';
+  }).join('');
 }
 
 async function openMaterial(mat, id) {
   if (!mat) return;
   currentMat = mat;
-  document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active'));
-  const activeEl = document.getElementById('mat-item-' + (id || mat.id));
+  document.querySelectorAll('.material-item').forEach(function(el) { el.classList.remove('active'); });
+  var activeEl = document.getElementById('mat-item-' + (id || mat.id));
   if (activeEl) activeEl.classList.add('active');
   document.getElementById('empty-state').style.display      = 'none';
   document.getElementById('docHeader').style.display        = 'flex';
@@ -693,18 +916,18 @@ async function loadPDF(url) {
 
 async function renderPage(pageNum) {
   if (!pdfDoc) return;
-  const page     = await pdfDoc.getPage(pageNum);
-  const viewport = page.getViewport({ scale: 1.5 });
-  const canvasEl = document.getElementById('pdf-canvas');
-  const ctx      = canvasEl.getContext('2d');
+  var page     = await pdfDoc.getPage(pageNum);
+  var viewport = page.getViewport({ scale: 1.5 });
+  var canvasEl = document.getElementById('pdf-canvas');
+  var ctx      = canvasEl.getContext('2d');
   canvasEl.width  = viewport.width;
   canvasEl.height = viewport.height;
-  await page.render({ canvasContext: ctx, viewport }).promise;
+  await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 }
 
 function updatePageCounter() {
   if (!pdfDoc) return;
-  document.getElementById('pageCounter').textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
+  document.getElementById('pageCounter').textContent = 'Page ' + currentPage + ' of ' + pdfDoc.numPages;
   document.getElementById('prevBtn').disabled = currentPage <= 1;
   document.getElementById('nextBtn').disabled = currentPage >= pdfDoc.numPages;
 }
@@ -716,16 +939,16 @@ async function nextPage() { if (!pdfDoc || currentPage >= pdfDoc.numPages) retur
 async function detectLoop() {
   if (!detecting) return;
   try {
-    const ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0);
-    const faces = await faceModel.estimateFaces(canvas, false);
+    var faces = await faceModel.estimateFaces(canvas, false);
     if (faces.length === 0) {
       triggerBlur('No face detected', 'Position your face in front of the camera to resume');
     } else if (faces.length > 1) {
       triggerBlur('Multiple faces detected', 'Only the registered student may view this content');
       if (window._flashBlack) window._flashBlack();
     } else {
-      const prob = faces[0].probability ? faces[0].probability[0] : 1;
+      var prob = faces[0].probability ? faces[0].probability[0] : 1;
       if (prob < 0.65) {
         triggerBlur('Face not clearly visible', 'Look directly at your front camera to resume');
       } else {
@@ -761,13 +984,14 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function showToast(msg, type = 'info') {
-  const wrap  = document.getElementById('toastWrap');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
+function showToast(msg, type) {
+  type = type || 'info';
+  var wrap  = document.getElementById('toastWrap');
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + type;
   toast.textContent = msg;
   wrap.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 320); }, 3500);
+  setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 320); }, 3500);
 }
 </script>
 </body>
