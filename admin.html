@@ -278,7 +278,7 @@
         <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">Available via WhatsApp — we typically respond within a few hours</div>
       </div>
     </div>
-    <a href="https://wa.me/2348158167305?text=Hello%2C%20I%20need%20help%20with%20my%20Velune%20dashboard." target="_blank" rel="noopener noreferrer"
+    <a href="https://wa.me/2348158167305?text=Hello%2C%20I%20need%20help%20with%20my%20Velune%20dashboard." target="_system" rel="noopener noreferrer"
       style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:white;font-weight:600;font-size:0.85rem;padding:10px 18px;border-radius:8px;text-decoration:none;flex-shrink:0;transition:opacity 0.15s">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
         <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -535,5 +535,12 @@
 
 <script src="./supabase.js"></script>
 <script src="./admin.js"></script>
+<script type="module">
+import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/app@6/dist/esm/index.js';
+App.addListener('backButton', ({ canGoBack }) => {
+  if (canGoBack) { window.history.back(); }
+  else { if (confirm('Exit Velune?')) { App.exitApp(); } }
+});
+</script>
 </body>
 </html>

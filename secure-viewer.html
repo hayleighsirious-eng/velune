@@ -1137,6 +1137,14 @@ function closeDrawer() {
   document.getElementById('materials-sidebar').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
 }
+
+</script>
+<script type="module">
+import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/app@6/dist/esm/index.js';
+App.addListener('backButton', ({ canGoBack }) => {
+  if (canGoBack) { window.history.back(); }
+  else { if (confirm('Exit Velune?')) { App.exitApp(); } }
+});
 </script>
 </body>
 </html>

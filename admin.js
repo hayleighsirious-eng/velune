@@ -1390,3 +1390,4 @@ function toggleFaq(btn) {
   body.style.display = isOpen ? 'none' : 'block';
   chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
+
