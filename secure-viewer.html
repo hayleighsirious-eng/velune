@@ -240,7 +240,82 @@
       body * { visibility: hidden !important; display: none !important; }
       body::after { visibility: visible !important; display: block !important; content: "Printing is disabled for this content."; font-size: 2rem; text-align: center; padding: 40px; }
     }
-    @media (max-width: 768px) { #materials-sidebar { display: none; } #viewer-area { margin-left: 0; padding: 16px; } }
+
+    /* ── HAMBURGER BUTTON (mobile only) ── */
+    .hamburger-btn {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .hamburger-btn svg { stroke: white; }
+
+    /* ── DRAWER OVERLAY (mobile) ── */
+    #drawer-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 399;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #drawer-overlay.open { opacity: 1; }
+
+    @media (max-width: 768px) {
+      /* Hide sidebar, show hamburger */
+      #materials-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 400;
+        top: 56px;
+        width: 280px;
+      }
+      #materials-sidebar.open {
+        transform: translateX(0);
+      }
+      #drawer-overlay { display: block; pointer-events: none; }
+      #drawer-overlay.open { pointer-events: all; }
+      .hamburger-btn { display: flex; }
+      #viewer-area { margin-left: 0; padding: 12px; }
+
+      /* Topbar compact on mobile */
+      .topbar { padding: 0 12px; }
+      .topbar-brand-name { font-size: 0.85rem; }
+      .cam-indicator { padding: 4px 8px; font-size: 0.68rem; gap: 4px; }
+      .cam-indicator span { display: none; }
+      .btn-back { padding: 5px 10px; font-size: 0.75rem; }
+      .btn-back svg { display: none; }
+
+      /* Doc header stacks on mobile */
+      .doc-header { flex-direction: column; align-items: flex-start; padding: 12px 14px; gap: 10px; }
+      .doc-title { font-size: 0.95rem; }
+      .doc-controls { width: 100%; justify-content: space-between; }
+      .ctrl-btn { padding: 8px 16px; font-size: 0.82rem; flex: 1; justify-content: center; }
+      .page-counter { font-size: 0.82rem; text-align: center; flex: 1; }
+
+      /* PDF canvas fits screen */
+      #pdf-canvas-wrap { padding: 8px; border-radius: 10px; }
+      #pdf-canvas { width: 100% !important; height: auto !important; }
+
+      /* Text content padding */
+      #text-content-wrap { padding: 18px 16px; font-size: 0.9rem; }
+
+      /* Gate screen */
+      #camera-gate { padding: 30px 16px; }
+      .gate-title { font-size: 1.2rem; }
+      .gate-progress { width: 240px; }
+
+      /* Cam preview smaller on mobile */
+      #cam-preview { width: 56px; height: 42px; bottom: 10px; right: 10px; }
+
+      /* Viewer area full width */
+      #viewer-wrap { min-height: calc(100vh - 56px); }
+    }
+  
   </style>
 </head>
 <body>
@@ -261,14 +336,21 @@
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="topbar-brand">
-    <div class="topbar-brand-icon">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.2">
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
+    </button>
+    <div class="topbar-brand">
+      <div class="topbar-brand-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </div>
+      <div class="topbar-brand-name" id="centreTitleBar">Velune</div>
     </div>
-    <div class="topbar-brand-name" id="centreTitleBar">Velune</div>
   </div>
   <div class="topbar-right">
     <div class="cam-indicator">
@@ -281,6 +363,9 @@
     </a>
   </div>
 </header>
+
+<!-- DRAWER OVERLAY (mobile) -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
 
 <!-- CAMERA GATE -->
 <div id="camera-gate">
@@ -923,6 +1008,7 @@ function renderMaterialsList() {
 
 async function openMaterial(mat, id) {
   if (!mat) return;
+  closeDrawer(); // close drawer on mobile when material selected
   currentMat = mat;
   document.querySelectorAll('.material-item').forEach(function(el) { el.classList.remove('active'); });
   var activeEl = document.getElementById('mat-item-' + (id || mat.id));
@@ -1034,6 +1120,22 @@ function showToast(msg, type) {
   toast.textContent = msg;
   wrap.appendChild(toast);
   setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 320); }, 3500);
+}
+
+// ── DRAWER (mobile sidebar) ────────────────────────────────
+function toggleDrawer() {
+  var sidebar = document.getElementById('materials-sidebar');
+  var overlay = document.getElementById('drawer-overlay');
+  var isOpen  = sidebar.classList.contains('open');
+  if (isOpen) { closeDrawer(); } else { openDrawer(); }
+}
+function openDrawer() {
+  document.getElementById('materials-sidebar').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('materials-sidebar').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
 }
 </script>
 </body>
