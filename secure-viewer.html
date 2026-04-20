@@ -4,11 +4,9 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Velune — Secure Study Materials</title>
-   <link rel="icon" type="image/x-icon/jpeg" href="./assets/images/favicon-32x32.png">
+  <link rel="icon" type="image/x-icon/jpeg" href="./assets/images/favicon-32x32.png">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -36,88 +34,6 @@
       user-select: none;
     }
 
-    /*
-    ═══════════════════════════════════════════════════════
-    SCREEN PROTECTION SYSTEM — MULTI-LAYER APPROACH
-    ═══════════════════════════════════════════════════════
-
-    LAYER 1: Black video overlay (z-index near-max)
-    - A <video> playing a live black canvas stream sits on top of all content
-    - Browser compositors often capture the video layer separately
-    - Result: screenshots via browser DevTools / browser APIs → black frame
-
-    LAYER 2: CSS mix-blend-mode trick
-    - Two overlapping divs with mix-blend-mode: difference
-    - They cancel out visually (you see normal content)
-    - But screenshot tools that flatten layers BEFORE compositing
-      will see the unmixed layers = white flash / corruption
-    - Used by some banking apps and Telegram premium
-
-    LAYER 3: Hard black DIV flash on all known shortcuts
-    - Covers PrintScreen, Win+Shift+S, Cmd+Shift+3/4/5, etc.
-    - Also triggers on visibility change and window blur
-
-    LAYER 4: Canvas self-destruct
-    - PDF canvas is cleared immediately after any keydown
-      that matches screenshot patterns
-    
-    NOTE: OS-level screenshot (Win+PrtScr hardware key alone)
-    cannot be stopped by ANY web page. These layers handle
-    everything catchable by JavaScript.
-    ═══════════════════════════════════════════════════════
-    */
-
-    /* LAYER 1: Black video overlay */
-    #sp-video {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      z-index: 2147483640;
-      pointer-events: none;
-      /* opacity near-zero = invisible to human eye, still captured by screenshot APIs */
-      opacity: 0.0039;
-      object-fit: cover;
-    }
-
-    /* LAYER 2a: mix-blend-mode overlay pair */
-    #sp-blend-a, #sp-blend-b {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 2147483641;
-    }
-    /* First layer: very faint white — invisible to eye */
-    #sp-blend-a {
-      background: rgba(255,255,255,0.004);
-      mix-blend-mode: difference;
-    }
-    /* Second layer cancels first — net visual = 0 */
-    #sp-blend-b {
-      background: rgba(255,255,255,0.004);
-      mix-blend-mode: difference;
-    }
-
-    /* LAYER 3: Hard black flash div */
-    #sp-block {
-      position: fixed;
-      inset: 0;
-      z-index: 2147483647;
-      background: #000000;
-      display: none;
-      pointer-events: none;
-    }
-    /* Text shown inside the black screen */
-    #sp-block::after {
-      content: "🔒 Screenshot blocked";
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: rgba(255,255,255,0.3);
-      font-family: sans-serif;
-      font-size: 1.1rem;
-      letter-spacing: 0.05em;
-    }
-
     /* ── TOPBAR ── */
     .topbar {
       background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
@@ -135,29 +51,151 @@
     .topbar-brand-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
     .topbar-brand-name { font-family: 'Playfair Display', serif; font-size: 0.95rem; color: white; font-weight: 700; }
     .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .cam-indicator { display: flex; align-items: center; gap: 6px; padding: 5px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; font-size: 0.72rem; color: rgba(255,255,255,0.7); font-weight: 600; }
-    .cam-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray-400); transition: background 0.3s; }
-    .cam-dot.active { background: #2ecc71; box-shadow: 0 0 6px rgba(46,204,113,0.6); }
-    .cam-dot.danger { background: var(--danger); box-shadow: 0 0 6px rgba(192,57,43,0.6); }
+    .security-badge { display: flex; align-items: center; gap: 6px; padding: 5px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; font-size: 0.72rem; color: rgba(255,255,255,0.7); font-weight: 600; }
+    .security-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold-light); box-shadow: 0 0 6px rgba(232,180,34,0.6); }
     .btn-back { padding: 6px 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 6px; transition: background 0.2s; text-decoration: none; }
     .btn-back:hover { background: rgba(255,255,255,0.18); color: white; }
 
-    /* ── CAMERA GATE ── */
-    #camera-gate {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: calc(100vh - 56px); gap: 16px; padding: 40px 20px; text-align: center;
+    /* ── CONSENT MODAL ── */
+    #consent-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(10, 20, 50, 0.82);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-    .gate-cam-icon { width: 90px; height: 90px; background: var(--gray-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse-cam 2s ease-in-out infinite; }
-    @keyframes pulse-cam { 0%, 100% { box-shadow: 0 0 0 0 rgba(201,150,12,0); } 50% { box-shadow: 0 0 0 14px rgba(201,150,12,0.12); } }
-    .gate-cam-icon.ready { background: rgba(12,122,74,0.1); animation: none; }
-    .gate-cam-icon.error { background: var(--danger-bg); animation: none; }
-    .gate-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); font-weight: 700; }
-    .gate-sub { font-size: 0.88rem; color: var(--gray-400); max-width: 320px; line-height: 1.6; }
-    .gate-progress { width: 280px; height: 6px; background: var(--gray-100); border-radius: 100px; overflow: hidden; }
-    .gate-progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 100px; transition: width 0.4s ease; }
-    .gate-step { font-size: 0.78rem; color: var(--gray-400); font-weight: 600; }
-    .gate-error { background: var(--danger-bg); border: 1px solid rgba(192,57,43,0.2); border-radius: 10px; padding: 14px 20px; font-size: 0.83rem; color: var(--danger); max-width: 340px; font-weight: 600; line-height: 1.5; display: none; }
-    .gate-retry-btn { padding: 10px 24px; background: var(--navy); color: white; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: none; }
+    .consent-card {
+      background: white;
+      border-radius: 20px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+      overflow: hidden;
+      animation: slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .consent-header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      padding: 28px 28px 24px;
+      text-align: center;
+    }
+    .consent-shield {
+      width: 60px; height: 60px;
+      background: rgba(201,150,12,0.18);
+      border: 2px solid rgba(201,150,12,0.4);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .consent-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: white;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .consent-subtitle {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.55);
+      font-weight: 500;
+    }
+    .consent-body {
+      padding: 24px 28px 28px;
+    }
+    .consent-notice {
+      background: #FFF8E7;
+      border: 1.5px solid rgba(201,150,12,0.3);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+    }
+    .consent-notice-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .consent-notice-title svg { flex-shrink: 0; }
+    .consent-notice p {
+      font-size: 0.82rem;
+      color: var(--gray-600);
+      line-height: 1.65;
+    }
+    .consent-notice p strong {
+      color: var(--navy);
+      font-weight: 700;
+    }
+    .consent-points {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .consent-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+    .consent-point-dot {
+      width: 20px; height: 20px;
+      background: rgba(201,150,12,0.12);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .consent-point-dot svg { stroke: var(--gold); }
+    .consent-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-decline {
+      flex: 1;
+      padding: 12px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-100);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gray-600);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s;
+    }
+    .btn-decline:hover { background: #E0E4EF; }
+    .btn-proceed {
+      flex: 2;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+      border: none;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-proceed:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-proceed:active { transform: translateY(0); }
 
     /* ── ACCESS DENIED ── */
     #access-denied { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 56px); padding: 40px 20px; text-align: center; }
@@ -182,15 +220,6 @@
     .wm-name { font-size: 13px; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; white-space: nowrap; }
     .wm-id { font-size: 10px; font-weight: 600; color: var(--navy); letter-spacing: 0.06em; white-space: nowrap; }
     .wm-centre { font-size: 9px; color: var(--navy); opacity: 0.7; white-space: nowrap; }
-
-    /* ── BLUR OVERLAY ── */
-    #blur-overlay { position: fixed; inset: 0; z-index: 500; backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); background: rgba(10, 20, 50, 0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
-    #blur-overlay.active { opacity: 1; pointer-events: all; }
-    .blur-icon { width: 70px; height: 70px; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-    .blur-icon svg { stroke: white; }
-    .blur-title { font-size: 1.1rem; font-weight: 700; color: white; text-align: center; max-width: 280px; }
-    .blur-sub { font-size: 0.82rem; color: rgba(255,255,255,0.6); text-align: center; max-width: 280px; line-height: 1.5; }
-    .blur-reason-pill { background: rgba(192,57,43,0.25); border: 1px solid rgba(192,57,43,0.4); color: #ff8a80; font-size: 0.75rem; font-weight: 700; padding: 5px 14px; border-radius: 20px; letter-spacing: 0.04em; }
 
     /* ── SIDEBAR ── */
     #materials-sidebar { width: 260px; background: white; border-right: 1px solid var(--gray-100); position: fixed; top: 56px; left: 0; bottom: 0; overflow-y: auto; z-index: 100; padding: 16px 0; }
@@ -224,10 +253,6 @@
     #empty-state svg { stroke: var(--gray-100); }
     #empty-state p { font-size: 0.88rem; }
 
-    /* cam preview (tiny, bottom-right) */
-    #cam-preview { position: fixed; bottom: 14px; right: 14px; width: 72px; height: 54px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,0.3); object-fit: cover; transform: scaleX(-1); opacity: 0.25; z-index: 600; display: none; }
-    #cam-canvas { display: none; }
-
     /* Toast */
     .toast-wrap { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; }
     .toast { padding: 10px 20px; border-radius: 10px; font-size: 0.83rem; font-weight: 600; color: white; background: var(--navy); box-shadow: var(--shadow-lg); animation: fadeUp 0.3s ease; }
@@ -235,104 +260,46 @@
     .toast.success { background: var(--success); }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    * { -webkit-print-color-adjust: exact; }
     @media print {
       body * { visibility: hidden !important; display: none !important; }
       body::after { visibility: visible !important; display: block !important; content: "Printing is disabled for this content."; font-size: 2rem; text-align: center; padding: 40px; }
     }
 
     /* ── HAMBURGER BUTTON (mobile only) ── */
-    .hamburger-btn {
-      display: none;
-      align-items: center; justify-content: center;
-      width: 36px; height: 36px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
+    .hamburger-btn { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; flex-shrink: 0; }
     .hamburger-btn svg { stroke: white; }
 
-    /* ── DRAWER OVERLAY (mobile) ── */
-    #drawer-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 399;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
+    #drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 399; opacity: 0; transition: opacity 0.3s ease; }
     #drawer-overlay.open { opacity: 1; }
 
     @media (max-width: 768px) {
-      /* Hide sidebar, show hamburger */
-      #materials-sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        z-index: 400;
-        top: 56px;
-        width: 280px;
-      }
-      #materials-sidebar.open {
-        transform: translateX(0);
-      }
+      #materials-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 400; top: 56px; width: 280px; }
+      #materials-sidebar.open { transform: translateX(0); }
       #drawer-overlay { display: block; pointer-events: none; }
       #drawer-overlay.open { pointer-events: all; }
       .hamburger-btn { display: flex; }
       #viewer-area { margin-left: 0; padding: 12px; }
-
-      /* Topbar compact on mobile */
       .topbar { padding: 0 12px; }
       .topbar-brand-name { font-size: 0.85rem; }
-      .cam-indicator { padding: 4px 8px; font-size: 0.68rem; gap: 4px; }
-      .cam-indicator span { display: none; }
+      .security-badge { padding: 4px 8px; font-size: 0.68rem; gap: 4px; }
+      .security-badge span { display: none; }
       .btn-back { padding: 5px 10px; font-size: 0.75rem; }
       .btn-back svg { display: none; }
-
-      /* Doc header stacks on mobile */
       .doc-header { flex-direction: column; align-items: flex-start; padding: 12px 14px; gap: 10px; }
       .doc-title { font-size: 0.95rem; }
       .doc-controls { width: 100%; justify-content: space-between; }
       .ctrl-btn { padding: 8px 16px; font-size: 0.82rem; flex: 1; justify-content: center; }
       .page-counter { font-size: 0.82rem; text-align: center; flex: 1; }
-
-      /* PDF canvas fits screen */
       #pdf-canvas-wrap { padding: 8px; border-radius: 10px; }
       #pdf-canvas { width: 100% !important; height: auto !important; }
-
-      /* Text content padding */
       #text-content-wrap { padding: 18px 16px; font-size: 0.9rem; }
-
-      /* Gate screen */
-      #camera-gate { padding: 30px 16px; }
-      .gate-title { font-size: 1.2rem; }
-      .gate-progress { width: 240px; }
-
-      /* Cam preview smaller on mobile */
-      #cam-preview { width: 56px; height: 42px; bottom: 10px; right: 10px; }
-
-      /* Viewer area full width */
-      #viewer-wrap { min-height: calc(100vh - 56px); }
+      .consent-card { margin: 0; }
+      .consent-header { padding: 22px 20px 18px; }
+      .consent-body { padding: 18px 20px 22px; }
     }
-  
   </style>
 </head>
 <body>
-
-<!-- ═══════════════════════════════════════════════
-  SCREEN PROTECTION LAYERS
-  ═══════════════════════════════════════════════ -->
-
-<!-- LAYER 3: Hard black block (JS-triggered) -->
-<div id="sp-block"></div>
-
-<!-- LAYER 2: mix-blend-mode pair (passive, always on) -->
-<div id="sp-blend-a"></div>
-<div id="sp-blend-b"></div>
-
-<!-- LAYER 1: Black video stream overlay (always on) -->
-<video id="sp-video" autoplay muted playsinline></video>
 
 <!-- TOPBAR -->
 <header class="topbar">
@@ -353,9 +320,9 @@
     </div>
   </div>
   <div class="topbar-right">
-    <div class="cam-indicator">
-      <div class="cam-dot" id="camDot"></div>
-      <span id="camStatus">Starting camera…</span>
+    <div class="security-badge">
+      <div class="security-dot"></div>
+      <span>Monitored Session</span>
     </div>
     <a href="./student.html" class="btn-back">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -366,22 +333,6 @@
 
 <!-- DRAWER OVERLAY (mobile) -->
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
-
-<!-- CAMERA GATE -->
-<div id="camera-gate">
-  <div class="gate-cam-icon" id="gateCamIcon">
-    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#8E9AB5" stroke-width="1.8" id="gateCamSvg">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 0 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-      <circle cx="12" cy="13" r="4"/>
-    </svg>
-  </div>
-  <div class="gate-title" id="gateTitle">Enabling Security Camera</div>
-  <div class="gate-sub" id="gateSub">Camera access is required to view secure study materials. Please allow access when prompted.</div>
-  <div class="gate-progress"><div class="gate-progress-bar" id="gateProgressBar"></div></div>
-  <div class="gate-step" id="gateStep">Initialising AI model…</div>
-  <div class="gate-error" id="gateError"></div>
-  <button class="gate-retry-btn" id="gateRetryBtn" onclick="window.location.reload()">Try Again</button>
-</div>
 
 <!-- ACCESS DENIED -->
 <div id="access-denied">
@@ -402,15 +353,6 @@
 <!-- MAIN VIEWER -->
 <div id="viewer-wrap">
   <div id="watermark-layer"><div class="wm-grid" id="wmGrid"></div></div>
-
-  <div id="blur-overlay">
-    <div class="blur-icon">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    </div>
-    <div class="blur-title" id="blurTitle">Content Locked</div>
-    <div class="blur-reason-pill" id="blurReason">Security alert</div>
-    <div class="blur-sub" id="blurSub">Look directly at the camera to resume viewing</div>
-  </div>
 
   <aside id="materials-sidebar">
     <div class="sidebar-label">Study Materials</div>
@@ -446,8 +388,51 @@
   </div>
 </div>
 
-<video id="cam-preview" autoplay playsinline muted></video>
-<canvas id="cam-canvas"></canvas>
+<!-- CONSENT MODAL (shown per-material click) -->
+<div id="consent-overlay" style="display:none;">
+  <div class="consent-card">
+    <div class="consent-header">
+      <div class="consent-shield">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold-light)" stroke-width="1.8">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div class="consent-title">This material is for you only</div>
+      <div class="consent-subtitle" id="consentMatTitle">Secure Study Document</div>
+    </div>
+    <div class="consent-body">
+      <div class="consent-notice">
+        <div class="consent-notice-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Important Notice
+        </div>
+        <p>This content is <strong>exclusively for you</strong>. Your name, student ID, and access timestamp are <strong>permanently embedded</strong> as a watermark in this document. All your activity on this platform is being monitored and can be traced directly back to you.</p>
+      </div>
+      <div class="consent-points">
+        <div class="consent-point">
+          <div class="consent-point-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          Screenshots, screen recordings, and sharing are strictly prohibited.
+        </div>
+        <div class="consent-point">
+          <div class="consent-point-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          Any unauthorised distribution can be traced back to your account.
+        </div>
+        <div class="consent-point">
+          <div class="consent-point-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          Violations may result in immediate suspension and legal action.
+        </div>
+      </div>
+      <div class="consent-actions">
+        <button class="btn-decline" onclick="declineConsent()">Go Back</button>
+        <button class="btn-proceed" onclick="acceptConsent()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+          I Understand, Proceed
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -460,406 +445,30 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ── State ─────────────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────
 let studentData    = null;
 let ownerProfile   = null;
 let allMaterials   = [];
+let pendingMat     = null; // material waiting for consent
+let pendingMatId   = null;
 let currentMat     = null;
 let pdfDoc         = null;
 let currentPage    = 1;
-let faceModel      = null;
-let cameraStream   = null;
-let detecting      = false;
-let blurActive     = false;
 
-const video       = document.getElementById('cam-preview');
-const canvas      = document.getElementById('cam-canvas');
-const blurOverlay = document.getElementById('blur-overlay');
-const camDot      = document.getElementById('camDot');
-const camStatus   = document.getElementById('camStatus');
-const spBlock     = document.getElementById('sp-block');
+// ── Block right-click, print, drag, select ─────────────────
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('dragstart',   function(e){ e.preventDefault(); });
+document.addEventListener('selectstart', function(e){ e.preventDefault(); });
+window.addEventListener('beforeprint',   function(e){ e.preventDefault(); showToast('Printing is not allowed.','danger'); });
 
-// ============================================================
-// ═══════════════════════════════════════════════════════════
-// SCREEN PROTECTION SYSTEM
-// ═══════════════════════════════════════════════════════════
-// ============================================================
-(function initScreenProtection() {
-
-  // ─────────────────────────────────────────────────────────
-  // LAYER 1: Live black canvas → video stream overlay
-  // ─────────────────────────────────────────────────────────
-  // This is the most effective web-level technique.
-  // captureStream() creates a MediaStream from a canvas.
-  // We play it in a <video> that sits over all content at
-  // near-zero opacity. The human eye cannot see it, but
-  // the browser compositor sends the VIDEO layer to screen
-  // capture APIs, which receive solid black.
-  //
-  // This stops: browser DevTools screenshots, Electron
-  // screenshot APIs, some screen recorder browser extensions.
-  // Does NOT stop: OS-level PrtScr, Win+PrtScr.
-  (function setupBlackVideoStream() {
-    try {
-      var bc = document.createElement('canvas');
-      bc.width = 2; bc.height = 2;
-      var bx = bc.getContext('2d');
-
-      // Keep painting black every frame so stream stays live/active
-      function paintBlack() {
-        bx.fillStyle = '#000';
-        bx.fillRect(0, 0, 2, 2);
-        requestAnimationFrame(paintBlack);
-      }
-      paintBlack();
-
-      var stream = bc.captureStream(60); // 60fps keeps it "live"
-      var spv = document.getElementById('sp-video');
-      spv.srcObject = stream;
-      spv.play().catch(function(){});
-    } catch(e) {
-      // captureStream not supported (rare) — other layers still active
-    }
-  })();
-
-  // ─────────────────────────────────────────────────────────
-  // FLASH helper — shows solid black for N ms
-  // ─────────────────────────────────────────────────────────
-  var flashTimer = null;
-  function flashBlack(ms) {
-    ms = ms || 800;
-    spBlock.style.display = 'block';
-    if (flashTimer) clearTimeout(flashTimer);
-    flashTimer = setTimeout(function() {
-      spBlock.style.display = 'none';
-    }, ms);
-  }
-  window._flashBlack = flashBlack;
-
-  // Also clear PDF canvas content during flash
-  function nukeCanvases() {
-    var c = document.getElementById('pdf-canvas');
-    if (c) {
-      var x = c.getContext('2d');
-      x.clearRect(0, 0, c.width, c.height);
-      x.fillStyle = '#000';
-      x.fillRect(0, 0, c.width, c.height);
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────
-  // LAYER 3: Keyboard shortcut blocking + flash
-  // ─────────────────────────────────────────────────────────
-  // We handle every known screenshot shortcut across Windows,
-  // macOS, and Linux. On detection: preventDefault + flash black.
-  //
-  // Windows PrtScr (no modifier) — keydown CAN catch this in
-  // most browsers when the page is focused. keyup is a fallback.
-  //
-  // IMPORTANT: Win+PrtScr (hardware-level) and Snipping Tool
-  // opened via Start menu CANNOT be stopped by any web page.
-  // We minimise damage by clearing canvases and flashing black.
-
-  var screenshotKeys = new Set([
-    'printscreen', 'print', 'prtscn', 'sysrq'
-  ]);
-
-  function handleKey(e) {
-    var k = (e.key || '').toLowerCase();
-    var ctrl  = e.ctrlKey;
-    var meta  = e.metaKey;
-    var shift = e.shiftKey;
-    var alt   = e.altKey;
-
-    // Block common utility shortcuts
-    if ((ctrl || meta) && ['s','p','u','a','c','x','v','j','i'].includes(k)) {
-      e.preventDefault(); e.stopPropagation(); return false;
-    }
-    if (e.key === 'F12') { e.preventDefault(); return false; }
-
-    // ── Windows / Linux screenshot keys ──
-    // PrtScr alone (keydown)
-    if (screenshotKeys.has(k)) {
-      e.preventDefault(); e.stopPropagation();
-      flashBlack(1200); nukeCanvases();
-      triggerBlur('Screenshot blocked', 'Screen capture is not permitted');
-      return false;
-    }
-    // Win+Shift+S → Snipping Tool
-    if (shift && (meta || ctrl) && k === 's') {
-      e.preventDefault(); e.stopPropagation();
-      flashBlack(1200); nukeCanvases();
-      return false;
-    }
-    // ── macOS screenshot combos ──
-    if (meta && shift && ['3','4','5','6'].includes(k)) {
-      e.preventDefault(); e.stopPropagation();
-      flashBlack(1200); nukeCanvases();
-      return false;
-    }
-    // macOS Ctrl+Shift+3/4 (clipboard)
-    if (ctrl && shift && ['3','4'].includes(k)) {
-      e.preventDefault(); e.stopPropagation();
-      flashBlack(1200); nukeCanvases();
-      return false;
-    }
-    // Alt+PrtScr (window capture on Windows)
-    if (alt && screenshotKeys.has(k)) {
-      e.preventDefault(); e.stopPropagation();
-      flashBlack(1200); nukeCanvases();
-      return false;
-    }
-  }
-
-  // Listen on both keydown AND keyup — some browsers fire PrtScr only on keyup
-  document.addEventListener('keydown', handleKey, true);
-  document.addEventListener('keyup',   handleKey, true);
-  // Also capture on window level
-  window.addEventListener('keydown', handleKey, true);
-  window.addEventListener('keyup',   handleKey, true);
-
-  // ─────────────────────────────────────────────────────────
-  // Tab switch / visibility change → flash + blur
-  // ─────────────────────────────────────────────────────────
-  // When user switches tabs, the OS has a chance to screenshot.
-  // We flash black and clear canvases proactively.
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-      flashBlack(5000); // stay black for 5s to cover any screenshot taken while hidden
-      nukeCanvases();
-      triggerBlur('Screen hidden', 'Return to this tab to resume viewing');
-    } else {
-      spBlock.style.display = 'none';
-      if (detecting) clearBlur();
-    }
-  });
-
-  // ─────────────────────────────────────────────────────────
-  // Window blur → flash + nuke
-  // ─────────────────────────────────────────────────────────
-  // Fires when: Alt+Tab, clicking Snipping Tool, OBS grabbing focus
-  window.addEventListener('blur', function() {
-    flashBlack(5000);
-    nukeCanvases();
-    triggerBlur('Window lost focus', 'Return to this window to resume viewing');
-  });
-  window.addEventListener('focus', function() {
-    spBlock.style.display = 'none';
-    if (detecting) clearBlur();
-  });
-
-  // ─────────────────────────────────────────────────────────
-  // Block getDisplayMedia (screen share / record)
-  // ─────────────────────────────────────────────────────────
-  if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-    var _orig = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
-    navigator.mediaDevices.getDisplayMedia = function(opts) {
-      flashBlack(3000); nukeCanvases();
-      triggerBlur('Screen recording blocked', 'Screen capture is not allowed for this content');
-      return _orig.apply(this, arguments); // still streams (black, due to video overlay)
-    };
-  }
-
-  // ─────────────────────────────────────────────────────────
-  // Block right-click, text selection, drag
-  // ─────────────────────────────────────────────────────────
-  document.addEventListener('contextmenu',  function(e) { e.preventDefault(); });
-  document.addEventListener('dragstart',    function(e) { e.preventDefault(); });
-  document.addEventListener('selectstart',  function(e) { e.preventDefault(); });
-
-  // ─────────────────────────────────────────────────────────
-  // Block print
-  // ─────────────────────────────────────────────────────────
-  window.addEventListener('beforeprint', function() {
-    flashBlack(5000); nukeCanvases();
-    triggerBlur('Printing disabled', 'This content cannot be printed');
-  });
-
-  // ─────────────────────────────────────────────────────────
-  // Pointer events: block middle-click (opens in new tab)
-  // ─────────────────────────────────────────────────────────
-  document.addEventListener('pointerdown', function(e) {
-    if (e.button === 1) { e.preventDefault(); } // middle click
-    if (e.button === 2) { e.preventDefault(); } // right click
-  });
-
-  // ─────────────────────────────────────────────────────────
-  // EXTRA: Periodically re-paint PDF canvas with noise
-  // so a static screenshot yields random pixels, not readable content
-  // ─────────────────────────────────────────────────────────
-  // This runs only when the window is NOT focused.
-  // When focused: normal render. When blurred: noise overlay.
-  var noiseActive = false;
-  function startNoiseOverlay() {
-    if (noiseActive) return;
-    noiseActive = true;
-    (function noise() {
-      if (!noiseActive) return;
-      var c = document.getElementById('pdf-canvas');
-      if (c && c.width && c.height) {
-        var x = c.getContext('2d');
-        // Semi-transparent random noise on top of content
-        var imgData = x.createImageData(c.width, c.height);
-        for (var i = 0; i < imgData.data.length; i += 4) {
-          var v = Math.random() * 255 | 0;
-          imgData.data[i]   = v;
-          imgData.data[i+1] = v;
-          imgData.data[i+2] = v;
-          imgData.data[i+3] = 255;
-        }
-        x.putImageData(imgData, 0, 0);
-      }
-      setTimeout(noise, 100);
-    })();
-  }
-  function stopNoiseOverlay() {
-    noiseActive = false;
-    // Re-render the current PDF page so user sees content again
-    if (pdfDoc && currentPage) renderPage(currentPage).catch(function(){});
-  }
-
-  window.addEventListener('blur',  function() { startNoiseOverlay(); });
-  window.addEventListener('focus', function() { stopNoiseOverlay();  });
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden) { startNoiseOverlay(); }
-    else { stopNoiseOverlay(); }
-  });
-
-  // ─────────────────────────────────────────────────────────
-// MOBILE: Go black instantly on ANY visibility/focus loss
-// Catches power+volume screenshots, home button, app-switch
-// ─────────────────────────────────────────────────────────
-document.addEventListener('visibilitychange', function () {
-  if (document.visibilityState === 'hidden') {
-    // instantly black — no delay, covers the screenshot moment
-    spBlock.style.display = 'block';
-    nukeCanvases();
-    startNoiseOverlay();
-  } else {
-    spBlock.style.display = 'none';
-    stopNoiseOverlay();
-  }
-});
-// pageshow fires on back-navigation (iOS/Android back gesture)
-window.addEventListener('pageshow', function (e) {
-  if (e.persisted) {
-    // page was served from bfcache — re-arm protection
-    spBlock.style.display = 'none';
-    if (detecting) clearBlur();
-  }
-});
-
-// pagehide fires just before the page is hidden/suspended
-window.addEventListener('pagehide', function () {
-  spBlock.style.display = 'block';
-  nukeCanvases();
-});
-// Android: fires when a notification shade or system UI
-// pulls down over the app window (partial visibility loss)
-if ('visualViewport' in window) {
-  window.visualViewport.addEventListener('resize', function () {
-    var ratio = window.visualViewport.height / window.screen.height;
-    if (ratio < 0.75) {
-      // system UI (e.g. notification panel) is covering the app
-      flashBlack(3000);
-      nukeCanvases();
-    }
-  });
-}
-
-})(); // end initScreenProtection
-
-
-// ── BOOT: Camera first, then auth ─────────────────────────────────
-let cameraInitDone  = false;
-let authInitDone    = false;
-let authResult      = null;
-
-function setGateProgress(pct, step) {
-  document.getElementById('gateProgressBar').style.width = pct + '%';
-  document.getElementById('gateStep').textContent = step;
-}
-
-function showGateError(msg) {
-  var icon = document.getElementById('gateCamIcon');
-  var svg  = document.getElementById('gateCamSvg');
-  icon.className = 'gate-cam-icon error';
-  svg.setAttribute('stroke', 'var(--danger)');
-  document.getElementById('gateTitle').textContent = 'Camera Required';
-  document.getElementById('gateSub').textContent   = '';
-  document.getElementById('gateProgressBar').style.width = '100%';
-  document.getElementById('gateProgressBar').style.background = 'var(--danger)';
-  document.getElementById('gateStep').textContent = '';
-  var errEl = document.getElementById('gateError');
-  errEl.style.display = 'block';
-  errEl.textContent   = msg;
-  document.getElementById('gateRetryBtn').style.display = 'block';
-  camDot.className      = 'cam-dot danger';
-  camStatus.textContent = 'Camera denied';
-}
-
-async function initCameraAndAI() {
-  try {
-    setGateProgress(10, 'Loading AI face detection model…');
-    faceModel = await blazeface.load();
-    setGateProgress(50, 'Requesting camera access…');
-
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }
-    });
-
-    video.srcObject = cameraStream;
-    setGateProgress(75, 'Starting camera preview…');
-
-    await new Promise(function(resolve, reject) {
-      video.onloadedmetadata = resolve;
-      video.onerror = reject;
-      setTimeout(resolve, 3000);
-    });
-
-    canvas.width  = video.videoWidth  || 320;
-    canvas.height = video.videoHeight || 240;
-
-    setGateProgress(88, 'Verifying your presence…');
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    var faces = await faceModel.estimateFaces(canvas, false);
-
-    setGateProgress(100, 'Camera ready!');
-
-    var icon = document.getElementById('gateCamIcon');
-    var svg  = document.getElementById('gateCamSvg');
-    icon.className = 'gate-cam-icon ready';
-    svg.setAttribute('stroke', 'var(--success)');
-    document.getElementById('gateTitle').textContent = 'Camera Active';
-    document.getElementById('gateSub').textContent   = 'Your session is now secured.';
-    document.getElementById('gateStep').textContent  = '';
-    video.style.display = 'block';
-    camDot.className      = 'cam-dot active';
-    camStatus.textContent = 'Secured';
-    detecting = true;
-
-    cameraInitDone = true;
-    checkBothReady();
-  } catch (err) {
-    if (err.name === 'NotAllowedError') {
-      showGateError('Camera access was denied. Camera is required to view secure study materials. Please allow camera access in your browser settings and reload.');
-    } else {
-      showGateError('Could not start camera: ' + (err.message || err.name) + '. Please check your device camera and reload.');
-    }
-  }
-}
-
+// ── AUTH ────────────────────────────────────────────────────
 async function initAuth() {
   var studentId = localStorage.getItem('zt_student_id');
   var ownerId   = localStorage.getItem('zt_owner_id');
 
-  if (!studentId) {
-    authResult = { error: 'not_logged_in' };
-    authInitDone = true;
-    checkBothReady();
-    return;
-  }
+  if (!studentId) { showAccessDenied('You are not logged in. Please sign in first.'); return; }
+
+  document.getElementById('loading-screen').style.display = 'flex';
 
   try {
     var stuRes = await _supabase.from('students').select('*').eq('id', studentId).single();
@@ -867,84 +476,50 @@ async function initAuth() {
       ? await _supabase.from('profiles').select('*').eq('id', ownerId).single()
       : { data: null };
 
-    if (stuRes.error || !stuRes.data) {
-      authResult = { error: 'not_found' };
-    } else {
-      authResult = { studentData: stuRes.data, ownerProfile: profileRes.data || {} };
+    if (stuRes.error || !stuRes.data) { showAccessDenied('Student record not found. Please contact your admin.'); return; }
+
+    studentData  = stuRes.data;
+    ownerProfile = profileRes.data || {};
+
+    var centreName = (ownerProfile && ownerProfile.centre_name) ? ownerProfile.centre_name : 'Velune';
+    document.getElementById('centreTitleBar').textContent = centreName;
+    document.title = centreName + ' — Study Materials';
+
+    if (!studentData.vip_active) {
+      showAccessDenied(
+        studentData.balance > 0
+          ? 'You have an outstanding balance of ₦' + (studentData.balance || 0).toLocaleString() + '. Complete your payment to access study materials.'
+          : 'Study materials are only available to VIP students. Please contact your admin.'
+      );
+      return;
     }
-  } catch (e) {
-    authResult = { error: 'fetch_error' };
-  }
 
-  authInitDone = true;
-  checkBothReady();
-}
+    buildWatermark(studentData.name, studentData.serial || studentData.login_id || studentData.student_pin, centreName);
 
-function checkBothReady() {
-  if (!cameraInitDone || !authInitDone) return;
-
-  document.getElementById('camera-gate').style.display = 'none';
-
-  if (authResult.error === 'not_logged_in') {
-    showAccessDenied('You are not logged in. Please sign in first.');
-    return;
-  }
-  if (authResult.error === 'not_found') {
-    showAccessDenied('Student record not found. Please contact your admin.');
-    return;
-  }
-  if (authResult.error) {
-    showAccessDenied('Something went wrong. Please try again.');
-    return;
-  }
-
-  studentData  = authResult.studentData;
-  ownerProfile = authResult.ownerProfile;
-
-  var centreName = (ownerProfile && ownerProfile.centre_name) ? ownerProfile.centre_name : 'Velune';
-  document.getElementById('centreTitleBar').textContent = centreName;
-  document.title = centreName + ' — Study Materials';
-
-  if (!studentData.vip_active) {
-    showAccessDenied(
-      studentData.balance > 0
-        ? 'You have an outstanding balance of ₦' + (studentData.balance || 0).toLocaleString() + '. Complete your payment to access study materials.'
-        : 'Study materials are only available to VIP students. Please contact your admin.'
-    );
-    return;
-  }
-
-  buildWatermark(
-    studentData.name,
-    studentData.serial || studentData.login_id || studentData.student_pin,
-    centreName
-  );
-
-  loadMaterials(localStorage.getItem('zt_owner_id')).then(function() {
+    await loadMaterials(ownerId);
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('viewer-wrap').style.display    = 'block';
-    detectLoop();
-  });
 
-  document.getElementById('loading-screen').style.display = 'flex';
+  } catch(e) {
+    showAccessDenied('Something went wrong. Please try again.');
+  }
 }
 
-initCameraAndAI();
 initAuth();
 
-// ── Access denied ──────────────────────────────────────────────────
+// ── Access denied ───────────────────────────────────────────
 function showAccessDenied(msg) {
-  document.getElementById('camera-gate').style.display    = 'none';
   document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('viewer-wrap').style.display    = 'none';
   document.getElementById('access-denied').style.display  = 'flex';
   document.getElementById('denied-msg').textContent       = msg;
 }
 
-// ── Watermark ──────────────────────────────────────────────────────
+// ── Watermark ───────────────────────────────────────────────
 function buildWatermark(name, id, centre) {
-  var grid  = document.getElementById('wmGrid');
-  var date  = new Date().toLocaleDateString('en-GB');
-  var html  = '';
+  var grid = document.getElementById('wmGrid');
+  var date = new Date().toLocaleDateString('en-GB');
+  var html = '';
   for (var i = 0; i < 200; i++) {
     html += '<div class="wm-item">'
       + '<div class="wm-name">' + escHtml(name) + '</div>'
@@ -955,7 +530,7 @@ function buildWatermark(name, id, centre) {
   grid.innerHTML = html;
 }
 
-// ── Load materials ──────────────────────────────────────────────────
+// ── Load materials ──────────────────────────────────────────
 async function loadMaterials(ownerId) {
   var query = _supabase.from('materials').select('*')
     .eq('secure', true)
@@ -963,27 +538,16 @@ async function loadMaterials(ownerId) {
   if (ownerId) query = query.eq('owner_id', ownerId);
 
   var res = await query;
-  var data = res.data, error = res.error;
-
-  allMaterials = (!error && data && data.length) ? data : getDemoMaterials();
+  allMaterials = (!res.error && res.data && res.data.length) ? res.data : getDemoMaterials();
   renderMaterialsList();
-  if (allMaterials.length) openMaterial(allMaterials[0]);
 }
 
 function getDemoMaterials() {
   return [
-    {
-      id: 'demo-1',
-      title: 'Chapter 1 — Introduction to Algebra',
-      type: 'text',
-      content: '<h2>Chapter 1: Introduction to Algebra</h2><p>Algebra is one of the broad areas of mathematics. In its most general form, algebra is the study of mathematical symbols and the rules for manipulating those symbols.</p><h3>1.1 Variables and Expressions</h3><p>A variable is a letter that represents an unknown number. For example, in the expression <strong>2x + 5</strong>, the letter <em>x</em> is the variable.</p><h3>1.2 Solving Simple Equations</h3><p>To solve an equation means to find the value of the variable that makes the equation true. For example, to solve <strong>x + 7 = 12</strong>, we subtract 7 from both sides to get <strong>x = 5</strong>.</p>',
-    },
-    {
-      id: 'demo-2',
-      title: 'Chapter 2 — Organic Chemistry Notes',
-      type: 'text',
-      content: '<h2>Chapter 2: Organic Chemistry</h2><p>Organic chemistry is the study of the structure, properties, composition, reactions, and preparation of carbon-containing compounds.</p><h3>2.1 Alkanes</h3><p>Alkanes are saturated hydrocarbons with the general formula <strong>CₙH₂ₙ₊₂</strong>. They are relatively unreactive due to the strength of C–C and C–H sigma bonds.</p>',
-    },
+    { id:'demo-1', title:'Chapter 1 — Introduction to Algebra', type:'text',
+      content:'<h2>Chapter 1: Introduction to Algebra</h2><p>Algebra is one of the broad areas of mathematics. In its most general form, algebra is the study of mathematical symbols and the rules for manipulating those symbols.</p><h3>1.1 Variables and Expressions</h3><p>A variable is a letter that represents an unknown number. For example, in the expression <strong>2x + 5</strong>, the letter <em>x</em> is the variable.</p><h3>1.2 Solving Simple Equations</h3><p>To solve an equation means to find the value of the variable that makes the equation true. For example, to solve <strong>x + 7 = 12</strong>, we subtract 7 from both sides to get <strong>x = 5</strong>.</p>' },
+    { id:'demo-2', title:'Chapter 2 — Organic Chemistry Notes', type:'text',
+      content:'<h2>Chapter 2: Organic Chemistry</h2><p>Organic chemistry is the study of the structure, properties, composition, reactions, and preparation of carbon-containing compounds.</p><h3>2.1 Alkanes</h3><p>Alkanes are saturated hydrocarbons with the general formula <strong>CₙH₂ₙ₊₂</strong>. They are relatively unreactive due to the strength of C–C and C–H sigma bonds.</p>' },
   ];
 }
 
@@ -994,7 +558,7 @@ function renderMaterialsList() {
     return;
   }
   list.innerHTML = allMaterials.map(function(m, i) {
-    return '<div class="material-item ' + (i === 0 ? 'active' : '') + '" id="mat-item-' + m.id + '" onclick="openMaterial(allMaterials[' + i + '], \'' + m.id + '\')">'
+    return '<div class="material-item" id="mat-item-' + m.id + '" onclick="requestOpenMaterial(allMaterials[' + i + '], \'' + m.id + '\')">'
       + '<div class="material-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
       + (m.type === 'pdf'
           ? '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
@@ -1006,17 +570,44 @@ function renderMaterialsList() {
   }).join('');
 }
 
+// ── Consent flow ────────────────────────────────────────────
+function requestOpenMaterial(mat, id) {
+  if (!mat) return;
+  closeDrawer();
+  pendingMat   = mat;
+  pendingMatId = id;
+  document.getElementById('consentMatTitle').textContent = mat.title;
+  document.getElementById('consent-overlay').style.display = 'flex';
+}
+
+function declineConsent() {
+  document.getElementById('consent-overlay').style.display = 'none';
+  pendingMat   = null;
+  pendingMatId = null;
+}
+
+function acceptConsent() {
+  document.getElementById('consent-overlay').style.display = 'none';
+  if (pendingMat) {
+    openMaterial(pendingMat, pendingMatId);
+    pendingMat   = null;
+    pendingMatId = null;
+  }
+}
+
+// ── Open material (after consent) ──────────────────────────
 async function openMaterial(mat, id) {
   if (!mat) return;
-  closeDrawer(); // close drawer on mobile when material selected
   currentMat = mat;
-  document.querySelectorAll('.material-item').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.material-item').forEach(function(el){ el.classList.remove('active'); });
   var activeEl = document.getElementById('mat-item-' + (id || mat.id));
   if (activeEl) activeEl.classList.add('active');
+
   document.getElementById('empty-state').style.display      = 'none';
   document.getElementById('docHeader').style.display        = 'flex';
   document.getElementById('docTitle').textContent           = mat.title;
   document.getElementById('docMeta').textContent            = mat.type === 'pdf' ? 'PDF Document' : 'Study Notes · Text';
+
   if (mat.type === 'pdf') {
     document.getElementById('text-content-wrap').style.display = 'none';
     document.getElementById('pdf-canvas-wrap').style.display    = 'flex';
@@ -1037,7 +628,7 @@ async function loadPDF(url) {
     currentPage = 1;
     await renderPage(currentPage);
     updatePageCounter();
-  } catch (err) {
+  } catch(err) {
     showToast('Could not load PDF. Please contact admin.', 'danger');
   }
 }
@@ -1063,50 +654,7 @@ function updatePageCounter() {
 async function prevPage() { if (!pdfDoc || currentPage <= 1) return; currentPage--; await renderPage(currentPage); updatePageCounter(); }
 async function nextPage() { if (!pdfDoc || currentPage >= pdfDoc.numPages) return; currentPage++; await renderPage(currentPage); updatePageCounter(); }
 
-// ── FACE DETECTION LOOP ───────────────────────────────────────────
-async function detectLoop() {
-  if (!detecting) return;
-  try {
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    var faces = await faceModel.estimateFaces(canvas, false);
-    if (faces.length === 0) {
-      triggerBlur('No face detected', 'Position your face in front of the camera to resume');
-    } else if (faces.length > 1) {
-      triggerBlur('Multiple faces detected', 'Only the registered student may view this content');
-      if (window._flashBlack) window._flashBlack();
-    } else {
-      var prob = faces[0].probability ? faces[0].probability[0] : 1;
-      if (prob < 0.65) {
-        triggerBlur('Face not clearly visible', 'Look directly at your front camera to resume');
-      } else {
-        clearBlur();
-      }
-    }
-  } catch (e) { /* silent */ }
-  setTimeout(detectLoop, 500);
-}
-
-function triggerBlur(title, sub) {
-  if (blurActive && document.getElementById('blurTitle').textContent === title) return;
-  blurActive = true;
-  document.getElementById('blurTitle').textContent  = title;
-  document.getElementById('blurSub').textContent    = sub;
-  document.getElementById('blurReason').textContent = 'Security alert';
-  blurOverlay.classList.add('active');
-  camDot.className      = 'cam-dot danger';
-  camStatus.textContent = 'Alert';
-}
-
-function clearBlur() {
-  if (!blurActive) return;
-  blurActive = false;
-  blurOverlay.classList.remove('active');
-  camDot.className      = 'cam-dot active';
-  camStatus.textContent = 'Secured';
-}
-
-// ── Utilities ──────────────────────────────────────────────────────
+// ── Utilities ───────────────────────────────────────────────
 function escHtml(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1119,15 +667,13 @@ function showToast(msg, type) {
   toast.className = 'toast ' + type;
   toast.textContent = msg;
   wrap.appendChild(toast);
-  setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 320); }, 3500);
+  setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(function(){ toast.remove(); },320); }, 3500);
 }
 
-// ── DRAWER (mobile sidebar) ────────────────────────────────
+// ── DRAWER (mobile sidebar) ─────────────────────────────────
 function toggleDrawer() {
   var sidebar = document.getElementById('materials-sidebar');
-  var overlay = document.getElementById('drawer-overlay');
-  var isOpen  = sidebar.classList.contains('open');
-  if (isOpen) { closeDrawer(); } else { openDrawer(); }
+  sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
 }
 function openDrawer() {
   document.getElementById('materials-sidebar').classList.add('open');
@@ -1137,7 +683,6 @@ function closeDrawer() {
   document.getElementById('materials-sidebar').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
 }
-
 </script>
 <script type="module">
 import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/app@6/dist/esm/index.js';
